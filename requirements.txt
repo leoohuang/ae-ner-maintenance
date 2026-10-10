@@ -1,0 +1,10 @@
+torch>=2.3
+transformers>=4.48     
+scikit-learn
+numpy
+scipy
+pandas
+matplotlib
+pyyaml
+tqdm
+pytest
