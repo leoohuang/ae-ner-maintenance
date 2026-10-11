@@ -1,0 +1,11 @@
+encoder: null          # pilot 之后填
+encoder_lr: null       # pilot 之后填
+head_lr: 1.0e-3
+none_weight: 0.2
+head_hidden: 256
+width_dim: 16
+dropout: 0.1
+batch_size: 16
+max_len: 64
+min_steps: 300
+min_epochs: 5
