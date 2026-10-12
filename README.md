@@ -42,11 +42,8 @@
 - Decision: bert-base-uncased with encoder_lr 5e-5 (gap to RoBERTa is 0.86 points, about 4x BERT's std). Model and hyper-parameters frozen (tag v0.1-frozen). The test set was never used.
 - Limitations: the validation set has only 103 records; encoder_lr was selected on BERT only and not tuned separately for RoBERTa or ModernBERT. Pilot numbers are specific to this split and are not comparable with results from other splits.
 
-## Experiment protocol (pre-registered 2026-10-11, before any experiment run)
-- Budget is measured in word tokens of the train_pool (4,281). Grid: 5, 10, 20, 40, 60, 80, 100 percent (rounded to the nearest token).
-- Selection fills the budget record by record and stops as soon as the cumulative token count reaches or exceeds the budget; the actual token count is logged. The overshoot is at most 11 tokens (longest record has 12).
-- Random baseline: one random permutation of the train_pool per seed; every budget point uses a prefix of that permutation, so smaller budgets are nested in larger ones.
-- Seeds: 1-10. The same seed controls selection order, model initialisation and training order. Pilot seeds (101-103) are not reused.
-- The 100 percent point is the full-data reference; its F1 is the denominator for the 90 / 95 / 98 percent budget-to-reach thresholds.
-- Evaluation: micro-F1 on the test set (span-level exact match). This is the first use of the test set. No strategy, hyper-parameter or protocol change may be made after looking at test results. The validation set is used only for debugging and sanity checks.
-- Frozen: encoder bert-base-uncased, encoder_lr 5e-5 and all other values in configs/base.yaml.
+## Protocol amendment (2026-10-13, before any experiment was run)
+- The budget fill rule is changed from "stop once the budget is reached or exceeded" to the handbook rule: records are added in candidate order, a record that does not fit is skipped, and the total never exceeds the target. This aligns the actual budgets of all strategies almost exactly and supports adding records to an existing labelled set, which active-learning rounds need.
+- Random baseline: for each seed the budget points are built incrementally on one random permutation (smaller sets are contained in larger ones). The nested sets are always computed over the full grid, whichever points are run.
+- The 5 percent set of a seed is also the initial labelled set of the active-learning strategies with that seed.
+- All other items of the previous protocol are unchanged. No experiment result existed at the time of this amendment.

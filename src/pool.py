@@ -1,8 +1,12 @@
 import random
 
 # 预注册（实验前冻结）
-GRID = [0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 1.00]   # 预算点：占训练池总 token 的比例
-SEEDS = list(range(1, 11))                            # 10 个种子，pilot 用的是 101-103
+GRID = [0.05, 0.10, 0.20, 0.40, 0.60, 0.80, 1.00]   # 占训练池总 token 的比例
+SEEDS = list(range(1, 11))                            # pilot 用的 101-103 不复用
+
+
+def token_lengths(records):
+    return [len(r["tokens"]) for r in records]
 
 
 def pool_tokens(records, pool_ids):
@@ -10,24 +14,36 @@ def pool_tokens(records, pool_ids):
 
 
 def budgets(total_tokens, grid=GRID):
-    """每个预算点对应的 token 数。100% 即整个训练池。"""
     return {f: round(f * total_tokens) for f in grid}
 
 
-def random_order(pool_ids, seed):
-    """同一个种子永远得到同一个顺序；不同预算点取这个顺序的前缀。"""
-    order = list(pool_ids)
-    random.Random(seed).shuffle(order)
-    return order
+def random_order(ids, seed):
+    ids = list(ids)
+    random.Random(seed).shuffle(ids)
+    return ids
 
 
-def take_budget(order, records, budget):
-    """按顺序加记录，累计 token 一旦 >= budget 就停。
-    返回 (选中的记录下标, 实际用掉的 token 数)。"""
-    chosen, used = [], 0
-    for i in order:
-        if used >= budget:
+def fill_budget(candidates, tok_len, current_tokens, target_tokens):
+    """按候选顺序加入记录，放不下的跳过；总 token 数不会超过 target。
+    返回 (新增的记录下标, 加入后的总 token 数)。日志里要记录实际 total。"""
+    chosen, total = [], current_tokens
+    for i in candidates:
+        if total + tok_len[i] <= target_tokens:
+            chosen.append(i)
+            total += tok_len[i]
+        if total == target_tokens:
             break
-        chosen.append(i)
-        used += len(records[i]["tokens"])
-    return chosen, used
+    return chosen, total
+
+
+def random_nested_sets(order, tok_len, targets):
+    """随机策略：预算从小到大依次往已选集合里补记录，所以小预算的集合
+    一定被大预算的集合包含。返回 {target: (记录下标列表, 实际 token 数)}。"""
+    chosen, total, out = [], 0, {}
+    for t in sorted(targets):
+        taken = set(chosen)
+        rest = [i for i in order if i not in taken]
+        new, total = fill_budget(rest, tok_len, total, t)
+        chosen = chosen + new
+        out[t] = (list(chosen), total)
+    return out
