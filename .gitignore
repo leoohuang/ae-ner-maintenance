@@ -7,3 +7,12 @@ __pycache__/
 checkpoints/
 data/private/
 private/
+data/raw/
+eval/gold/
+.env
+venv/
+__pycache__/
+*.xlsx
+*.parquet
+.DS_Store
+results/smoke*.jsonl

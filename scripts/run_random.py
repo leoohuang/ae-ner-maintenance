@@ -39,8 +39,6 @@ def score(model, tok, recs):
 
 
 for seed in a.seeds:
-    # 无论这次只跑哪几个预算点，嵌套集合都按完整的 GRID 计算，
-    # 这样同一个种子在任何时候跑出来的某个预算点的数据都完全一样
     sets = random_nested_sets(random_order(pool, seed), tok_len, [bud[f] for f in GRID])
     for frac in a.fracs:
         if (frac, seed) in done:

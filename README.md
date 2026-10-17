@@ -59,3 +59,6 @@
 - Uncertainty: entropy of the 6-class softmax of every candidate span. Record score = mean of the L largest span entropies, where L is the number of words of the record (length-controlled). Ties are broken by the smaller record id.
 - Alternatives (maximum span entropy, fixed top-3 mean) are not part of the main experiment. If they are explored later they are reported as an ablation and never used to change the main strategy.
 - Seeds 1-10, as in the random baseline.
+## Note on the configuration freeze and result files (added 2026-10-17)
+- The pilot decision (bert-base-uncased, encoder_lr 5.0e-5) was recorded in README.md and results/pilot.json in commit e5265eb (tag v0.1-frozen, 2026-10-11). The configs/base.yaml in that commit still contained null for encoder and encoder_lr. The filled file was used for all later experiments, but it was committed only on 2026-10-17; tag v0.1b-config marks the commit that contains it. No other value of the configuration changed after the freeze.
+- The random baseline (results/random.jsonl) was run on 2026-10-13 and committed on 2026-10-17 (tag v0.3-random-baseline). The file was not modified in between.

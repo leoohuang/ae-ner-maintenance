@@ -1,5 +1,5 @@
-encoder: null          # pilot 之后填
-encoder_lr: null       # pilot 之后填
+encoder: bert-base-uncased
+encoder_lr: 5.0e-5
 head_lr: 1.0e-3
 none_weight: 0.2
 head_hidden: 256
