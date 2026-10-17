@@ -47,3 +47,15 @@
 - Random baseline: for each seed the budget points are built incrementally on one random permutation (smaller sets are contained in larger ones). The nested sets are always computed over the full grid, whichever points are run.
 - The 5 percent set of a seed is also the initial labelled set of the active-learning strategies with that seed.
 - All other items of the previous protocol are unchanged. No experiment result existed at the time of this amendment.
+
+## Protocol amendment 2 (2026-10-13, before any experiment was run)
+- Budget grid extended from 7 to 9 points: 5, 10, 15, 20, 30, 40, 60, 80, 100 percent of the train_pool tokens.
+- Rationale: a smoke run with seed 1, judged on the validation set only, gave F1 of 0.703 / 0.796 / 0.845 / 0.910 at 5 / 10 / 20 / 100 percent. The 90 percent threshold lies between 10 and 20 percent and the 95 percent threshold between 20 and 40 percent, so points were added at 15 and 30 percent to reduce interpolation error in the budget-to-reach metric.
+- No test-set result was used for this decision. No result of the full experiment existed at the time of this amendment.
+
+## Active-learning protocol (pre-registered 2026-10-16, before any active-learning run)
+- Rounds follow the budget grid (5, 10, 15, 20, 30, 40, 60, 80 percent). In each round the model trained on the current labelled set is evaluated on the test set (the learning-curve point) and is then used to score the remaining pool; the next batch fills the gap to the next budget point with fill_budget in ranked order. One batch per round, no retraining inside a round.
+- Initial labelled set: the 5 percent set of the random baseline with the same seed. The 5 percent point and the 100 percent point are shared with the random baseline.
+- Uncertainty: entropy of the 6-class softmax of every candidate span. Record score = mean of the L largest span entropies, where L is the number of words of the record (length-controlled). Ties are broken by the smaller record id.
+- Alternatives (maximum span entropy, fixed top-3 mean) are not part of the main experiment. If they are explored later they are reported as an ablation and never used to change the main strategy.
+- Seeds 1-10, as in the random baseline.
