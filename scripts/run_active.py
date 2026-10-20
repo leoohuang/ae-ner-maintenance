@@ -7,18 +7,23 @@ from src.evaluate import evaluate
 from src.pool import (GRID, SEEDS, budgets, pool_tokens, random_order,
                       random_nested_sets, fill_budget, token_lengths)
 from src.strategies import rank_by_uncertainty, record_score
+from src.hybrid import hybrid_select
+from src.embed import static_embeddings
 
 ROOT = Path(__file__).resolve().parent.parent
 ap = argparse.ArgumentParser()
 ap.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
 ap.add_argument("--max-frac", type=float, default=0.80)
-ap.add_argument("--out", default="results/uncertainty.jsonl")
+ap.add_argument("--strategy", choices=["uncertainty", "hybrid"], default="uncertainty")
+ap.add_argument("--out", default=None)
 a = ap.parse_args()
+a.out = a.out or f"results/{a.strategy}.jsonl"
 
 cfg = yaml.safe_load(open(ROOT / "configs/base.yaml"))
 assert cfg["encoder"] and cfg["encoder_lr"], "configs/base.yaml 还没有填好"
 records = [json.loads(l) for l in open(ROOT / "data/processed/gold.jsonl", encoding="utf-8")]
 tok_len = token_lengths(records)
+emb = static_embeddings(records) if a.strategy == "hybrid" else None
 split = json.load(open(ROOT / "data/splits/split_v1.json"))
 pool = split["train_pool"]
 val = [records[i] for i in split["val"]]
@@ -57,7 +62,7 @@ for seed in a.seeds:
         assert len(labelled) == len(set(labelled)) and used <= bud[frac]
         model, tok = finetune(cfg["encoder"], [records[i] for i in labelled], cfg, seed, device)
         mt, mv = score(model, tok, test), score(model, tok, val)
-        row = {"strategy": "uncertainty", "frac": frac, "seed": seed,
+        row = {"strategy": "a.strategy", "frac": frac, "seed": seed,
                "n_records": len(labelled), "tokens_used": used, "budget": bud[frac],
                "test_micro_f1": mt["micro_f1"], "test_precision": mt["precision"],
                "test_recall": mt["recall"], "test_macro_f1": mt["macro_f1"],
@@ -70,7 +75,11 @@ for seed in a.seeds:
             remaining = [i for i in pool if i not in taken]
             pred = predict(model, tok, [records[i] for i in remaining], cfg["max_len"], device)
             ranked = rank_by_uncertainty(pred, remaining, records)
-            new, used = fill_budget(ranked, tok_len, used, bud[AL_FRACS[k + 1]])
+            target = bud[AL_FRACS[k + 1]]
+            if a.strategy == "hybrid":
+                new, used = hybrid_select(ranked, emb, labelled, tok_len, used, target)
+            else:
+                new, used = fill_budget(ranked, tok_len, used, target)
             scores = {i: record_score(pr, tok_len[i]) for i, (_, pr) in zip(remaining, pred)}
             chosen = set(new)
             rest = [scores[i] for i in remaining if i not in chosen]
