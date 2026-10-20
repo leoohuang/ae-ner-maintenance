@@ -62,3 +62,35 @@
 ## Note on the configuration freeze and result files (added 2026-10-17)
 - The pilot decision (bert-base-uncased, encoder_lr 5.0e-5) was recorded in README.md and results/pilot.json in commit e5265eb (tag v0.1-frozen, 2026-10-11). The configs/base.yaml in that commit still contained null for encoder and encoder_lr. The filled file was used for all later experiments, but it was committed only on 2026-10-17; tag v0.1b-config marks the commit that contains it. No other value of the configuration changed after the freeze.
 - The random baseline (results/random.jsonl) was run on 2026-10-13 and committed on 2026-10-17 (tag v0.3-random-baseline). The file was not modified in between.
+
+## Results: uncertainty sampling (recorded 2026-10-20)
+
+The full uncertainty run (10 seeds, budgets 10-80%; 5% and 100% shared with the random baseline) is finished and is in `results/uncertainty.jsonl`. Comparison script: `scripts/compare.py`, plot: `results/compare_curve.png`. No setting was changed after seeing these numbers.
+
+| Budget | Random | Uncertainty | Diff |
+|---|---|---|---|
+| 5% | 0.7305 | 0.7305 | 0.0000 |
+| 10% | 0.7940 | 0.8120 | +0.0179 |
+| 15% | 0.8232 | 0.8429 | +0.0197 |
+| 20% | 0.8352 | 0.8544 | +0.0192 |
+| 30% | 0.8519 | 0.8705 | +0.0185 |
+| 40% | 0.8633 | 0.8799 | +0.0165 |
+| 60% | 0.8751 | 0.8874 | +0.0123 |
+| 80% | 0.8807 | 0.8886 | +0.0079 |
+| 100% | 0.8866 | 0.8866 | 0.0000 |
+
+- AULC (5-60%): random 0.8436 +- 0.0051, uncertainty 0.8597 +- 0.0036; the difference is +0.0162, uncertainty is better in 10 of 10 seeds, Wilcoxon p = 0.0020 (the smallest value possible with 10 seeds).
+- Budget to reach 90 / 95 / 98% of the reference F1 (0.8866): random 10.7 / 24.2 / 49.4%, uncertainty 9.1 / 14.9 / 29.0%.
+- Caveats: one split, 215 test records, public data only. The value at 80% (0.8886) is slightly above the 100% reference; the gap of 0.002 is within noise and is not interpreted.
+
+## Hybrid strategy protocol (pre-registered 2026-10-20, before any hybrid run)
+
+Everything not listed here is identical to the uncertainty run: same split, same frozen config, same seeds 1-10, same budget grid, same initial 5% random set per seed, 5% and 100% points shared with the random baseline, same evaluation.
+
+1. After each training round, score the remaining pool exactly as in the uncertainty strategy and rank it.
+2. Candidate set: take records in uncertainty order until their total tokens reach 3 times the tokens still needed to hit the next budget point.
+3. Record embedding: the mean of the static input word-piece embeddings of the pre-trained bert-base-uncased (not fine-tuned, so it never depends on training or test labels), L2-normalised. Distance = 1 - cosine similarity.
+4. Selection: farthest-first among the candidates. Repeatedly pick the candidate whose smallest distance to the already labelled records and the records picked in this round is largest. Ties go to the lower record id.
+5. A picked record that does not fit in the remaining budget is skipped (same rule as `fill_budget`), and selection continues. If the candidates are used up before the budget is exactly filled, the remaining space is filled from the next records in uncertainty order using `fill_budget`.
+6. The factor 3 and the embedding are fixed now. They are not tuned. Only this one configuration is run.
+7. Primary comparisons, same as before: AULC over 5-60%, budget to reach 90 / 95 / 98% of the reference, paired Wilcoxon test over 10 seeds, for hybrid vs uncertainty and hybrid vs random. Whatever the outcome, it is reported.
