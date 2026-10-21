@@ -110,3 +110,14 @@ The hybrid run (10 seeds, budgets 10-80%; 5% and 100% shared with the random bas
 - Hybrid vs uncertainty: AULC -0.0045, better in only 2 of 10 seeds, Wilcoxon p = 0.0137.
 - Result: adding diversity (farthest-first over static BERT embeddings) did not improve on plain uncertainty sampling in this setup. No reason was tested; possible explanations (the static embedding is a poor similarity measure, or the candidate set of 3 times the needed tokens drops some of the most uncertain records) are hypotheses only.
 - Caveats as before: one split, 215 test records, public data only, no correction for the three comparisons.
+
+## GPU replication protocol (pre-registered 2026-10-21, before any GPU experiment run)
+
+Purpose: check whether the three-way comparison holds on different hardware and software. This is an independent replication, not a change to the experiment.
+
+- Same code, same frozen config, same split, same seeds 1-10, same budget grid and the same protocols for random, uncertainty and hybrid as before. The only change is the device.
+- Environment: NAISS Arrhenius GPU partition, NVIDIA GH200 (aarch64), Python 3.13.5, torch 2.9.1, numpy 2.4.6, transformers 5.19.0. The earlier runs used a Mac (MPS), Python 3.11, torch 2.14.1.
+- Results are written to separate files in `results/gpu/` and are never merged with the Mac rows. The Mac results remain the main results. The GPU results are reported next to them.
+- Hardware check on 2026-10-21: seed 1, 5% budget, uncertainty. Mac test micro-F1 0.7197, GPU 0.7127. Same-seed results are not identical across hardware, so no row-by-row comparison is made.
+- Analysis: the same `compare_all.py`, with the same metrics, tests and thresholds. Agreement or disagreement between the two environments is reported either way. No setting is changed after seeing the GPU results.
+- Private data: no AstraZeneca data is used or copied to the cluster.
