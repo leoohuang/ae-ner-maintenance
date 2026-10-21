@@ -29,7 +29,7 @@ pool = split["train_pool"]
 val = [records[i] for i in split["val"]]
 test = [records[i] for i in split["test"]]
 bud = budgets(pool_tokens(records, pool))
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 AL_FRACS = [f for f in GRID if f < 1.0 and f <= a.max_frac]
 
 out = ROOT / a.out

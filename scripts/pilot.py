@@ -19,7 +19,7 @@ records = [json.loads(l) for l in open(ROOT / "data/processed/gold.jsonl", encod
 split = json.load(open(ROOT / "data/splits/split_v1.json"))
 train = [records[i] for i in split["train_pool"]]
 val = [records[i] for i in split["val"]]            # 测试集不加载
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
 out_path = ROOT / "results/pilot.json"
 results = json.load(open(out_path)) if out_path.exists() else []

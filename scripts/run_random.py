@@ -22,7 +22,7 @@ pool = split["train_pool"]
 val = [records[i] for i in split["val"]]
 test = [records[i] for i in split["test"]]
 bud = budgets(pool_tokens(records, pool))
-device = "mps" if torch.backends.mps.is_available() else "cpu"
+device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
 out = ROOT / a.out
 out.parent.mkdir(exist_ok=True)
