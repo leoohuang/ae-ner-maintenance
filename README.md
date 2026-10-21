@@ -94,3 +94,19 @@ Everything not listed here is identical to the uncertainty run: same split, same
 5. A picked record that does not fit in the remaining budget is skipped (same rule as `fill_budget`), and selection continues. If the candidates are used up before the budget is exactly filled, the remaining space is filled from the next records in uncertainty order using `fill_budget`.
 6. The factor 3 and the embedding are fixed now. They are not tuned. Only this one configuration is run.
 7. Primary comparisons, same as before: AULC over 5-60%, budget to reach 90 / 95 / 98% of the reference, paired Wilcoxon test over 10 seeds, for hybrid vs uncertainty and hybrid vs random. Whatever the outcome, it is reported.
+
+## Results: hybrid strategy (recorded 2026-10-21)
+
+The hybrid run (10 seeds, budgets 10-80%; 5% and 100% shared with the random baseline) is finished and is in `results/hybrid.jsonl`. Three-way comparison: `scripts/compare_all.py`, plot `results/compare_all_curve.png`. The protocol of 2026-10-20 was not changed after seeing these numbers.
+
+| Target (share of reference F1 0.8866) | Random | Uncertainty | Hybrid |
+|---|---|---|---|
+| 90% | 10.7% | 9.1% | 9.3% |
+| 95% | 24.2% | 14.9% | 17.6% |
+| 98% | 49.4% | 29.0% | 31.7% |
+| AULC (5-60%) | 0.8436 | 0.8597 | 0.8552 |
+
+- Hybrid vs random: AULC +0.0116, better in 10 of 10 seeds, Wilcoxon p = 0.0020.
+- Hybrid vs uncertainty: AULC -0.0045, better in only 2 of 10 seeds, Wilcoxon p = 0.0137.
+- Result: adding diversity (farthest-first over static BERT embeddings) did not improve on plain uncertainty sampling in this setup. No reason was tested; possible explanations (the static embedding is a poor similarity measure, or the candidate set of 3 times the needed tokens drops some of the most uncertain records) are hypotheses only.
+- Caveats as before: one split, 215 test records, public data only, no correction for the three comparisons.
