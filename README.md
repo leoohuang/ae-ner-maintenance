@@ -1,16 +1,26 @@
+## Log 10.11 — Near-Duplicate Grouping
 
-## log 10.11
-- 近似重复分组：词集合 Jaccard 相似度 >= 0.6（忽略占位符与 "-"），并查集连成组，整组进同一集合。
-  依据：0.5 会连成 164 条的无关大组，0.6 最大组 22 条且内容一致。残留局限：0.5–0.6 之间的近似重复仍可能跨集合。
+- **Near-duplicate grouping:** Records with a token-set Jaccard similarity ≥ 0.6 are considered near-duplicates (excluding placeholders and hyphens `-`). A Union-Find algorithm is used to group connected records, ensuring that all records in the same group are assigned to the same data split.
+- **Rationale:** A threshold of 0.5 resulted in a large cluster of 164 largely unrelated records, whereas 0.6 produced a maximum cluster size of 22 records with consistent content.
+- **Remaining limitation:** Near-duplicates with Jaccard similarities between 0.5 and 0.6 may still appear across different splits.
 
-## Pilot 规则（10.12 实验前冻结）
-- 训练集 = split_v1 的 train_pool（758 条）；比较只用 val（103 条）；test 不加载。
-- 候选：bert-base-uncased / roberta-base / answerdotai/ModernBERT-base
-- pilot 种子：101, 102, 103（与正式实验种子不同）
-- encoder_lr 只在 {2e-5, 5e-5} 里选一次：先用 BERT 跑两个学习率，选验证集 micro-F1 均值高者，然后三个编码器都用它。
-- 固定不调：head_lr 1e-3、none_weight 0.2、head_hidden 256、width_dim 16、dropout 0.1、batch_size 16、max_len 64、min_steps 300、min_epochs 5
-- 决策：验证集 micro-F1 均值最高者胜；若第一名与第二名的差小于 1 个标准差，选更稳定、更便宜的。
-- 运行失败的编码器记为"失败"，在报告里如实写原因。
+## Pilot Protocol (Frozen Before the 10.12 Experiments)
+
+- **Data split:** Training uses only the `train_pool` from `split_v1` (758 records). Model comparisons are conducted exclusively on the validation set (103 records). The test set is not loaded.
+- **Candidate encoders:** `bert-base-uncased`, `roberta-base`, and `answerdotai/ModernBERT-base`.
+- **Pilot random seeds:** 101, 102, and 103 (different from those used in the main experiments).
+- **Encoder learning rate selection:** The encoder learning rate is selected once from `{2e-5, 5e-5}`. BERT is first evaluated using both learning rates, and the one achieving the higher mean validation micro-F1 is selected. The same learning rate is then applied to all three encoders.
+- **Fixed hyperparameters (no further tuning):**
+  - `head_lr = 1e-3`
+  - `none_weight = 0.2`
+  - `head_hidden = 256`
+  - `width_dim = 16`
+  - `dropout = 0.1`
+  - `batch_size = 16`
+  - `max_len = 64`
+  - `min_steps = 300`
+  - `min_epochs = 5`
+- **Model selection criterion:** The encoder with the highest mean validation micro-F1 is selected. If the difference between the top two encoders is smaller than one standard deviation, preference is given to the more stable and computationally efficient encoder.
 
 ## Log 2026-10-11: near-duplicate grouping
 - Records are grouped by word-set Jaccard similarity >= 0.6 (lower-cased; placeholders and "-" ignored). Groups are built with union-find and each group goes entirely into one split.
