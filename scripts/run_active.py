@@ -62,7 +62,7 @@ for seed in a.seeds:
         assert len(labelled) == len(set(labelled)) and used <= bud[frac]
         model, tok = finetune(cfg["encoder"], [records[i] for i in labelled], cfg, seed, device)
         mt, mv = score(model, tok, test), score(model, tok, val)
-        row = {"strategy": "a.strategy", "frac": frac, "seed": seed,
+        row = {"strategy": a.strategy, "frac": frac, "seed": seed,
                "n_records": len(labelled), "tokens_used": used, "budget": bud[frac],
                "test_micro_f1": mt["micro_f1"], "test_precision": mt["precision"],
                "test_recall": mt["recall"], "test_macro_f1": mt["macro_f1"],

@@ -191,3 +191,7 @@ Purpose: check whether the three-way comparison holds on different hardware and 
 - Hardware check on 2026-10-21: seed 1, 5% budget, uncertainty. Mac test micro-F1 0.7197, GPU 0.7127. Same-seed results are not identical across hardware, so no row-by-row comparison is made.
 - Analysis: the same `compare_all.py`, with the same metrics, tests and thresholds. Agreement or disagreement between the two environments is reported either way. No setting is changed after seeing the GPU results.
 - Private data: no AstraZeneca data is used or copied to the cluster.
+
+## Note on the strategy label in hybrid result files (added 2026-10-31)
+- Commit 08ec3f3 wrote the literal string "a.strategy" instead of the strategy name into the `strategy` field of every row produced by `scripts/run_active.py`. All 80 rows of `results/hybrid.jsonl` (and the 2 rows of `results/smoke_hybrid.jsonl`) carry this wrong label; all other fields are correct. The uncertainty results were produced before that commit and are labelled correctly.
+- The analysis scripts select results by file name, not by this field, so no reported number is affected. The result files are left unchanged; the code is fixed before the GPU replication, so the `results/gpu/` files will carry the correct label.
