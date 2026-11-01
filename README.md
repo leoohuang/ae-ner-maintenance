@@ -1,3 +1,63 @@
+# Annotation-Efficient Nested NER for Maintenance Text
+
+How much labelled data does nested named entity recognition on short maintenance records actually need — and does active learning reduce it? This repository answers that question on the public **MaintIE** corpus with a span-based NER model and a pre-registered comparison of sampling strategies.
+
+> Public data only. No AstraZeneca or other private data is used in this repository.
+
+## Overview
+
+- **Task:** predict all entity spans of the five top-level MaintIE types (PhysicalObject, State, Process, Activity, Property), including nested spans.
+- **Model:** a pretrained Transformer encoder (`bert-base-uncased`, chosen in a pilot against RoBERTa and ModernBERT) with a span-classification head that scores every contiguous span ([`src/model.py`](src/model.py)).
+- **Strategies:** random sampling, uncertainty sampling (length-controlled span entropy), and a hybrid of uncertainty + diversity (farthest-first over static BERT embeddings).
+- **Evaluation:** learning curves over a token-budget grid (5–100% of the training pool), 10 seeds, area under the learning curve, budget needed to reach 90 / 95 / 98% of full-data F1, and paired Wilcoxon tests.
+- **Rigour:** the split, configuration, and each protocol were frozen and tagged in Git (`v0.0-split` … `v0.9-gpu-protocol`) before the corresponding experiment was run.
+
+## Status
+
+| Stage | Status |
+|---|---|
+| Data preparation, grouped split (near-duplicates kept in one split) | Done |
+| Encoder pilot and frozen configuration | Done |
+| Random baseline, uncertainty sampling, hybrid strategy (10 seeds each) | Done — see [uncertainty results](#results-uncertainty-sampling-recorded-2026-10-20) and [hybrid results](#results-hybrid-strategy-recorded-2026-10-21) |
+| Independent replication on NAISS GPU hardware | In progress — see the [GPU replication protocol](#gpu-replication-protocol-pre-registered-2026-10-21-before-any-gpu-experiment-run) |
+
+## Repository layout
+
+```text
+src/       data loading, span model, budgets and pools, sampling strategies, evaluation, statistics
+scripts/   data preparation, split creation, pilot, random / active-learning runs, comparisons
+configs/   frozen experiment configuration (base.yaml)
+data/      MaintIE gold release, processed records, frozen split
+results/   per-seed result files (JSONL) and learning-curve plots
+tests/     unit tests for data, budgets, strategies, hybrid selection, evaluation, statistics
+```
+
+## Quick start
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt          # exact versions: requirements.lock
+python -m pytest tests                   # unit tests
+python scripts/run_random.py             # random baseline   -> results/random.jsonl
+python scripts/run_active.py --strategy uncertainty
+python scripts/run_active.py --strategy hybrid
+python scripts/compare_all.py            # three-way comparison and plot
+```
+
+`scripts/gpu_job.sh` is the SLURM job script used on the NAISS Arrhenius cluster.
+
+## Limitations
+
+- One grouped split with 215 test records; it differs from published MaintIE splits, so scores are not comparable with published benchmarks.
+- The Property type has only 35 mentions in total; its per-type results are unreliable.
+- Results on Apple MPS and on GPU are not identical for the same seed; the Mac results are the main results.
+
+---
+
+# Research log
+
+The entries below are the chronological, pre-registered record of the project. They are kept unchanged.
+
 ## Log 10.11 — Near-Duplicate Grouping
 
 - **Near-duplicate grouping:** Records with a token-set Jaccard similarity ≥ 0.6 are considered near-duplicates (excluding placeholders and hyphens `-`). A Union-Find algorithm is used to group connected records, ensuring that all records in the same group are assigned to the same data split.
