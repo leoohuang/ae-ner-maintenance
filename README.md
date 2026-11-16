@@ -196,6 +196,25 @@ Purpose: check whether the three-way comparison holds on different hardware and 
 - Commit 08ec3f3 wrote the literal string "a.strategy" instead of the strategy name into the `strategy` field of every row produced by `scripts/run_active.py`. All 80 rows of `results/hybrid.jsonl` (and the 2 rows of `results/smoke_hybrid.jsonl`) carry this wrong label; all other fields are correct. The uncertainty results were produced before that commit and are labelled correctly.
 - The analysis scripts select results by file name, not by this field, so no reported number is affected. The result files are left unchanged; the code is fixed before the GPU replication, so the `results/gpu/` files will carry the correct label.
 
+## Results: GPU replication (run 2026-10-21, recorded 2026-11-16)
+
+The three runs of the GPU replication protocol finished on 2026-10-21 (NAISS Arrhenius, GH200; jobs 4188777-4188779) and are in `results/gpu/`; they were copied back to the repository only on 2026-11-16 and were not changed. Analysis with the same `scripts/compare_all.py` (now taking the result folder as an argument: `python scripts/compare_all.py results/gpu`), plot `results/gpu/compare_all_curve.png`.
+
+| | Mac (main results) | GPU |
+|---|---|---|
+| Reference F1 (random, 100%) | 0.8866 | 0.8882 |
+| AULC random / uncertainty / hybrid | 0.8436 / 0.8597 / 0.8552 | 0.8433 / 0.8571 / 0.8546 |
+| Uncertainty - random | +0.0162, 10 of 10 seeds, p = 0.0020 | +0.0138, 9 of 10 seeds, p = 0.0039 |
+| Hybrid - random | +0.0116, 10 of 10 seeds, p = 0.0020 | +0.0113, 9 of 10 seeds, p = 0.0039 |
+| Hybrid - uncertainty | -0.0045, 2 of 10 seeds, p = 0.0137 | -0.0025, 2 of 10 seeds, p = 0.1934 |
+| Budget to 90 / 95 / 98% of reference: random | 10.7 / 24.2 / 49.4% | 11.3 / 24.5 / 52.4% |
+| uncertainty | 9.1 / 14.9 / 29.0% | 9.5 / 16.7 / 32.1% |
+| hybrid | 9.3 / 17.6 / 31.7% | 9.3 / 17.9 / 34.6% |
+
+- Agreement: on both environments uncertainty and hybrid beat random in AULC with p < 0.01, and both save labelling to reach 95% and 98% of the reference.
+- Disagreement: hybrid is again lower than uncertainty and better in only 2 of 10 seeds, but on the GPU the difference is smaller (-0.0025) and not significant (p = 0.19). The Mac finding "hybrid is worse than uncertainty" is therefore not robust to the change of hardware and software; it is reported as a weak difference, not as an established one.
+- The GPU runs used the code before the label fix of 2026-10-31, so the `strategy` field of `results/gpu/uncertainty.jsonl` and `results/gpu/hybrid.jsonl` reads "a.strategy"; all other fields are correct.
+
 ## LLM annotation protocol (pre-registered 2026-11-16, before any LLM call)
 
 Purpose: measure how well LLMs label the MaintIE entities, whether their errors can be found before a human checks them, and whether active learning still helps when the training labels come from an LLM. Human labels stay the reference throughout: no LLM output is ever used as the evaluation standard. Only MaintIE is used; no AstraZeneca data.

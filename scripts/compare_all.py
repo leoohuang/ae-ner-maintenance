@@ -1,4 +1,5 @@
 import json
+import sys
 from collections import defaultdict
 import numpy as np
 from scipy.stats import wilcoxon
@@ -9,6 +10,7 @@ import matplotlib.pyplot as plt
 FR = [0.05, 0.10, 0.15, 0.20, 0.30, 0.40, 0.60, 0.80, 1.00]
 AULC_MAX = 0.60
 NAMES = ["random", "uncertainty", "hybrid"]
+DIR = sys.argv[1] if len(sys.argv) > 1 else "results"   # e.g. results/gpu
 
 
 def load(path):
@@ -22,7 +24,7 @@ def table(rows):
     return d
 
 
-T = {n: table(load("results/%s.jsonl" % n)) for n in NAMES}
+T = {n: table(load("%s/%s.jsonl" % (DIR, n))) for n in NAMES}
 R = T["random"]
 seeds = sorted(set.intersection(*[set(T[n]) for n in NAMES]))
 
@@ -98,5 +100,5 @@ plt.xlabel("labelled text (% of training words)")
 plt.ylabel("test micro-F1")
 plt.legend()
 plt.tight_layout()
-plt.savefig("results/compare_all_curve.png", dpi=150)
-print("saved results/compare_all_curve.png")
+plt.savefig("%s/compare_all_curve.png" % DIR, dpi=150)
+print("saved %s/compare_all_curve.png" % DIR)
