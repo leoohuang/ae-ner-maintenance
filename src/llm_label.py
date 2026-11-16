@@ -1,7 +1,10 @@
+import hashlib
 import json
 import random
 import re
+import time
 from collections import Counter
+from datetime import datetime, timezone
 
 from src.evaluate import TYPES
 
@@ -62,3 +65,53 @@ def render_prompt(template, rec, examples):
     """template 里有 {examples} 和 {record} 两个位置；示例带标准答案，待标记录不带。"""
     shown = "\n\n".join(format_record(e) + "\n" + json.dumps({"spans": e["spans"]}) for e in examples)
     return template.replace("{examples}", shown).replace("{record}", format_record(rec))
+
+
+def label_one(call, prompt, n_tokens, max_parse_retries=2, max_net_retries=5, sleep=time.sleep):
+    """调用一次模型并解析。预注册：解析不了最多重试 2 次，之后记为失败、这条不标实体。
+    网络错误（call 抛异常）另算，等一会儿再试，连续失败 max_net_retries 次就把异常抛出去，
+    整个运行停下，之后可以接着跑。"""
+    attempts = []
+    for _ in range(1 + max_parse_retries):
+        for k in range(max_net_retries):
+            try:
+                text, meta = call(prompt)
+                break
+            except Exception:
+                if k == max_net_retries - 1:
+                    raise
+                sleep(2 ** k)
+        spans, drops = parse_reply(text, n_tokens)
+        attempts.append({"text": text, "meta": meta})
+        if spans is not None:
+            return {"spans": spans, "drops": dict(drops), "failed": False, "attempts": attempts}
+    return {"spans": [], "drops": {}, "failed": True, "attempts": attempts}
+
+
+def done_ids(path):
+    """已经标过的记录（中断后接着跑时跳过）。"""
+    try:
+        return {json.loads(l)["id"] for l in open(path)}
+    except FileNotFoundError:
+        return set()
+
+
+def run_labelling(ids, records, call, prompt_for, label_path, raw_path, info, sleep=time.sleep):
+    """逐条标注 ids，结果追加写入：label_path 与 gold.jsonl 同格式（id、tokens、spans），
+    raw_path 存每次调用的原始回复、丢弃计数和 info（模型、设置等）。"""
+    label_path.parent.mkdir(parents=True, exist_ok=True)
+    raw_path.parent.mkdir(parents=True, exist_ok=True)
+    skip = done_ids(label_path)
+    for i in ids:
+        if i in skip:
+            continue
+        rec = records[i]
+        prompt = prompt_for(rec)
+        res = label_one(call, prompt, len(rec["tokens"]), sleep=sleep)
+        raw = {"id": i, **info, "prompt_sha1": hashlib.sha1(prompt.encode()).hexdigest(),
+               "time": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+               "failed": res["failed"], "drops": res["drops"], "attempts": res["attempts"]}
+        with open(raw_path, "a") as f:
+            f.write(json.dumps(raw, ensure_ascii=False) + "\n")
+        with open(label_path, "a") as f:
+            f.write(json.dumps({"id": i, "tokens": rec["tokens"], "spans": res["spans"]}) + "\n")
