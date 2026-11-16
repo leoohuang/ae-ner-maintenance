@@ -273,3 +273,9 @@ Notes on the choices:
 - The Qwen small model runs on the NAISS GPU node, not on the Mac (24 GB is too little for BF16 weights, and a quantised model would add a second difference). MaintIE is public data, so this is allowed by the GPU protocol.
 - `gpt-6-astra` and `gemini-4-carbon` cannot switch reasoning off or set a custom temperature. They run at their lowest reasoning level and default sampling; this difference from the other models is reported with the results.
 - The settings actually sent and the provider's returned model version are logged with every response.
+
+### Amendment 2 (2026-11-16, before any LLM call): training runs on the NAISS GPU
+- All NER training in this protocol (the uncertainty signal of RQ2 and all runs of RQ3) runs on the NAISS GPU environment of the GPU replication protocol, not on the Mac. Reason: about 560 training runs, too slow on the Mac.
+- Because same-seed results differ between the Mac and the GPU (GPU replication protocol, hardware check), RQ3 compares GPU with GPU only: the human-label reference curves for RQ3 are the GPU replication results in `results/gpu/` (random, uncertainty, hybrid), and budget-to-reach uses the GPU human-label 100% value as reference. The GPU replication is therefore run before RQ3. The Mac human-label results stay the main results of the earlier protocols and are not mixed with GPU rows.
+- LLM labelling through provider APIs is run from the Mac (no computation there; compute nodes may have no internet access). The self-hosted `Qwen/Qwen3.8-27B` runs on the NAISS GPU, as in amendment 1.
+- Nothing else changes.
