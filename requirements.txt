@@ -8,3 +8,6 @@ matplotlib
 pyyaml
 tqdm
 pytest
+openai
+anthropic
+google-genai

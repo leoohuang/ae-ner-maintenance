@@ -1,0 +1,49 @@
+# LLM annotation protocol, amendment 1 (README): model IDs and settings.
+# provider: openai (Responses API), compat (OpenAI-compatible chat API), anthropic, google, local.
+# Settings not listed are left at the provider default; what is actually sent is logged per call.
+
+gpt-6-astra:
+  provider: openai
+  model: gpt-6-astra
+  reasoning_effort: low          # lowest level; "none" not supported, no custom temperature
+
+gpt-6-luna:
+  provider: openai
+  model: gpt-6-luna
+  reasoning_effort: none
+  temperature: 0                 # dropped if the API refuses it (amendment 1)
+
+claude-opus-5-5:
+  provider: anthropic
+  model: claude-opus-5-5
+  effort: low                    # thinking cannot be switched off; lowest effort. No sampling parameters (amendment 3)
+
+claude-haiku-5-5:
+  provider: anthropic
+  model: claude-haiku-5-5
+  thinking: disabled             # no sampling parameters (amendment 3)
+
+qwen4-max:
+  provider: compat
+  model: qwen4-max
+  base_url: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
+  key_env: DASHSCOPE_API_KEY
+  temperature: 0
+  extra_body: {enable_thinking: false}
+
+qwen3.8-27b:
+  provider: local                # self-hosted on the NAISS GPU (scripts/gpu_label_job.sh)
+  model: Qwen/Qwen3.8-27B
+  enable_thinking: false         # greedy decoding
+
+gemini-4-carbon:
+  provider: google
+  model: gemini-4-carbon
+  thinking_level: low            # lowest level; temperature is ignored by the API
+
+deepseek-v4-pro:
+  provider: compat
+  model: deepseek-v4-pro
+  base_url: https://api.deepseek.com
+  key_env: DEEPSEEK_API_KEY
+  temperature: 0
