@@ -251,3 +251,25 @@ Everything not listed here is unchanged: split_v1, the frozen config, seeds 1-10
 - No setting in this section is changed after seeing any LLM label or result. Any change before that is recorded as a dated amendment with its reason.
 - All outcomes are reported, including null or negative ones. There is no correction for multiple comparisons; the number of comparisons is stated with the results.
 - Limitations stated in advance: MaintIE is public, so LLMs may have seen it during training and their scores may be too high; MaintIE has no status labels, so errors such as hedged text labelled as confirmed are not covered; one dataset, short English records.
+
+### Amendment 1 (2026-11-16, before any LLM call): model IDs and settings
+Checked on 2026-11-16 against the providers' official pages (OpenAI developers.openai.com/api/docs/models and changelog; Google aistudio.google.com/docs/models and changelog; Alibaba Cloud Model Studio model list; Hugging Face Qwen organisation; DeepSeek API change log).
+
+| Slot | Model ID | Sampling | Reasoning / thinking |
+|---|---|---|---|
+| OpenAI large | `gpt-6-astra` | no custom temperature (provider default) | `low` (lowest; `none` not supported) |
+| OpenAI small | `gpt-6-luna` | temperature 0 if accepted, else default | `none` |
+| Anthropic large | `claude-opus-5-5` | temperature 0 | extended thinking off |
+| Anthropic small | `claude-haiku-5-5` | temperature 0 | extended thinking off |
+| Qwen large | `qwen4-max` (Model Studio, international) | temperature 0 | `enable_thinking` false |
+| Qwen small | `Qwen/Qwen3.8-27B`, BF16 weights, self-hosted on the NAISS GPU node | temperature 0 (greedy) | thinking off (`enable_thinking` false) |
+| Google | `gemini-4-carbon` | no custom temperature (ignored by the API) | `thinking_level` low (lowest; cannot be switched off) |
+| DeepSeek | `deepseek-v4-pro` | temperature 0 | non-thinking mode if offered, else default |
+
+Notes on the choices:
+- OpenAI has no model named "mini" in the current list; `gpt-6-luna` is its smallest generally available text model.
+- Google has no generally available "Pro" model (Gemini 3.1 Pro is preview only). `gemini-4-carbon` is described as Google's most capable reasoning model and is GA since 2026-11-10.
+- `qwen4-max` is the flagship text model on Model Studio; the page does not label it stable or preview. The small Qwen slot is the newest open-weight generation (3.8), so the Qwen large/small pair also differs in generation; this is reported with the size comparison.
+- The Qwen small model runs on the NAISS GPU node, not on the Mac (24 GB is too little for BF16 weights, and a quantised model would add a second difference). MaintIE is public data, so this is allowed by the GPU protocol.
+- `gpt-6-astra` and `gemini-4-carbon` cannot switch reasoning off or set a custom temperature. They run at their lowest reasoning level and default sampling; this difference from the other models is reported with the results.
+- The settings actually sent and the provider's returned model version are logged with every response.
