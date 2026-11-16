@@ -1,4 +1,5 @@
 import json
+import random
 import re
 from collections import Counter
 
@@ -36,3 +37,28 @@ def parse_reply(text, n_tokens):
         else:
             seen.add(tuple(sp))
     return [list(s) for s in sorted(seen)], drops
+
+
+def assert_not_test(ids, split):
+    """预注册：test 集永远不发给任何 LLM。碰到 test 的记录直接报错。"""
+    bad = set(ids) & set(split["test"])
+    if bad:
+        raise ValueError(f"{len(bad)} test records must never be sent to an LLM")
+
+
+def val_subsets(split, n_examples, n_tune, seed):
+    """从 val 里固定抽两组互不重叠的记录：提示词里的示例、调提示词用的记录。"""
+    ids = sorted(split["val"])
+    random.Random(seed).shuffle(ids)
+    return ids[:n_examples], ids[n_examples:n_examples + n_tune]
+
+
+def format_record(rec):
+    """把每个词和它的下标一起给模型看，模型按下标回答。"""
+    return " ".join(f"{i}:{t}" for i, t in enumerate(rec["tokens"]))
+
+
+def render_prompt(template, rec, examples):
+    """template 里有 {examples} 和 {record} 两个位置；示例带标准答案，待标记录不带。"""
+    shown = "\n\n".join(format_record(e) + "\n" + json.dumps({"spans": e["spans"]}) for e in examples)
+    return template.replace("{examples}", shown).replace("{record}", format_record(rec))

@@ -1,4 +1,6 @@
-from src.llm_label import parse_reply
+import pytest
+
+from src.llm_label import assert_not_test, format_record, parse_reply, render_prompt, val_subsets
 
 
 def test_plain_json_is_parsed():
@@ -35,3 +37,32 @@ def test_unparseable_reply_returns_none():
     for text in ["Sure! Here are the entities:", '{"spans": "none"}', '{"entities": []}', ""]:
         spans, _ = parse_reply(text, 4)
         assert spans is None, text
+
+
+SPLIT = {"train_pool": [0, 1, 2], "val": list(range(10, 40)), "test": [50, 51]}
+
+
+def test_test_records_are_refused():
+    assert_not_test([0, 1, 10], SPLIT)
+    with pytest.raises(ValueError):
+        assert_not_test([0, 51], SPLIT)
+
+
+def test_val_subsets_are_disjoint_fixed_and_from_val():
+    ex, tune = val_subsets(SPLIT, n_examples=5, n_tune=20, seed=7)
+    assert len(ex) == 5 and len(tune) == 20 and not set(ex) & set(tune)
+    assert set(ex) | set(tune) <= set(SPLIT["val"])
+    assert (ex, tune) == val_subsets(SPLIT, n_examples=5, n_tune=20, seed=7)
+
+
+def test_record_shows_every_token_with_its_index():
+    assert format_record({"tokens": ["<id>", "pump", "leaking"]}) == "0:<id> 1:pump 2:leaking"
+
+
+def test_prompt_contains_examples_with_answers_and_the_record():
+    ex = [{"tokens": ["pump", "leaking"], "spans": [[0, 1, "PhysicalObject"], [1, 2, "State"]]}]
+    rec = {"tokens": ["replace", "seal"], "spans": [[1, 2, "PhysicalObject"]]}
+    p = render_prompt("EXAMPLES:\n{examples}\nRECORD:\n{record}", rec, ex)
+    assert "0:pump 1:leaking" in p and '{"spans": [[0, 1, "PhysicalObject"], [1, 2, "State"]]}' in p
+    assert p.endswith("0:replace 1:seal")
+    assert '"PhysicalObject"]]}' not in p.split("RECORD:")[1]    # the record's own answer is never shown
