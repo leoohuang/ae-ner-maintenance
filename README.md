@@ -195,3 +195,59 @@ Purpose: check whether the three-way comparison holds on different hardware and 
 ## Note on the strategy label in hybrid result files (added 2026-10-31)
 - Commit 08ec3f3 wrote the literal string "a.strategy" instead of the strategy name into the `strategy` field of every row produced by `scripts/run_active.py`. All 80 rows of `results/hybrid.jsonl` (and the 2 rows of `results/smoke_hybrid.jsonl`) carry this wrong label; all other fields are correct. The uncertainty results were produced before that commit and are labelled correctly.
 - The analysis scripts select results by file name, not by this field, so no reported number is affected. The result files are left unchanged; the code is fixed before the GPU replication, so the `results/gpu/` files will carry the correct label.
+
+## LLM annotation protocol (pre-registered 2026-11-16, before any LLM call)
+
+Purpose: measure how well LLMs label the MaintIE entities, whether their errors can be found before a human checks them, and whether active learning still helps when the training labels come from an LLM. Human labels stay the reference throughout: no LLM output is ever used as the evaluation standard. Only MaintIE is used; no AstraZeneca data.
+
+Everything not listed here is unchanged: split_v1, the frozen config, seeds 1-10, the budget grid, the initial 5% set per seed, the selection strategies and the human-labelled test set (215 records). The existing human-label results (`results/random.jsonl`, `uncertainty.jsonl`, `hybrid.jsonl`) are the comparison and are not rerun.
+
+### Models
+- Eight models in five families; three families with a large and a small model:
+
+| Family | Large | Small |
+|---|---|---|
+| OpenAI | current generally available flagship | its mini model |
+| Anthropic | Claude Opus 5.5 | Claude Haiku 5.5 |
+| Qwen | flagship via API | Qwen3.8-27B, run locally |
+| Google | current generally available Pro model | - |
+| DeepSeek | deepseek-v4-pro | - |
+
+- The exact model IDs for the OpenAI, Google and Qwen slots are taken from the providers' official model lists (generally available models only, no preview or restricted models) and recorded in an amendment to this section before the first LLM call. The list is not changed afterwards. If a model cannot be run, that is reported with its cause and it is not replaced.
+- Settings: temperature 0 where the API allows it, otherwise the provider default (recorded). Reasoning or thinking modes are switched off, or set to the lowest level where they cannot be switched off (recorded). One run per model. Model ID, call date, settings and every raw response are stored.
+
+### Labelling task (step 1)
+- Input: the tokens of one record with their indices; output: a list of spans `[start, end, type]` over token indices, type one of PhysicalObject, Activity, State, Process, Property. Same span format as `gold.jsonl`; nested spans are allowed, as in the gold data.
+- One prompt for all models, with the five type definitions and a few examples taken from validation records. The prompt is tuned on at most 20 validation records, then frozen before any train_pool record is sent. The test set is never sent to any LLM.
+- Validation: a span with indices outside the record, start >= end, an unknown type or an exact duplicate is dropped and counted. A response that cannot be parsed is retried at most twice; after that the record gets no spans and is counted as a failure. Drop and failure counts are reported per model.
+- Each model labels all 758 train_pool records. Labels are stored per model in the `gold.jsonl` format.
+
+### RQ1: label quality (step 2)
+- Exact-match span micro-F1 against the human labels on train_pool, per model; also per entity type (Property is rare, 26 mentions, and marked unreliable) and per record-length tertile.
+- Error types: missed span, extra span, boundary error (same type, overlapping span), type error (same span, other type).
+- Shared errors: the share of human spans that all eight models miss, and the share of model spans that at least six models agree on but that are wrong.
+- Bootstrap 95% intervals over records (1,000 resamples).
+
+### RQ2: finding LLM errors before review (step 3)
+- Unit: one record of one model's labels. A record is in error when that model's spans differ from the human spans in any way.
+- Pool: the train_pool records outside the 5% initial set of the seed.
+- Signals, computed per model and seed:
+  1. model uncertainty: the existing record score (mean of the L largest span entropies) from the NER model trained on the 5% initial set, using that LLM's labels for the 5% set;
+  2. LLM disagreement: 1 minus the mean span F1 between this model's labels and each of the other seven models' labels on the record;
+  3. combined: the mean of the two signals' ranks.
+- Measures: AUROC of each signal for "record in error"; and the share of all span errors of the model that a reviewer would see when checking the top k records by the signal, for k = 50, 100 and 200, compared with the expected share for k random records. Results are averaged over seeds 1-10 and reported per model.
+
+### RQ3: active learning with LLM labels (step 4)
+- Two models: the highest and the lowest train_pool micro-F1 in RQ1 (ties: the smaller model, then alphabetical ID).
+- For each of the two, random, uncertainty and hybrid are run with that model's labels as the training labels (initial 5% set, budget grid and seeds as before; the selection and the budget use the same records and tokens as before). Evaluation on the human test set.
+- Primary comparisons, paired over seeds 1-10 with the Wilcoxon signed-rank test:
+  - AULC (5-60%) of uncertainty vs random with LLM labels;
+  - AULC of each strategy with LLM labels vs the same strategy with human labels;
+  - the active-learning gain (uncertainty minus random AULC) with LLM labels vs with human labels.
+- Budget to reach 90 / 95 / 98% of the human-label reference F1 (0.8866), so all curves share one reference.
+- Run on the same Mac environment as the human-label results.
+
+### Rules
+- No setting in this section is changed after seeing any LLM label or result. Any change before that is recorded as a dated amendment with its reason.
+- All outcomes are reported, including null or negative ones. There is no correction for multiple comparisons; the number of comparisons is stated with the results.
+- Limitations stated in advance: MaintIE is public, so LLMs may have seen it during training and their scores may be too high; MaintIE has no status labels, so errors such as hedged text labelled as confirmed are not covered; one dataset, short English records.
