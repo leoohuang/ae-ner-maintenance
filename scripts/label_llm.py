@@ -20,7 +20,7 @@ EXAMPLE_SEED, N_EXAMPLES, N_TUNE = 2026, 5, 20          # preregistered: 5 examp
 ap = argparse.ArgumentParser()
 ap.add_argument("--model", required=True)
 ap.add_argument("--split", choices=["train_pool", "tune"], default="train_pool")
-ap.add_argument("--prompt", default="configs/prompts/label_v1.md")
+ap.add_argument("--prompt", default="configs/prompts/label_v2.md")   # frozen, README amendment 6
 ap.add_argument("--limit", type=int, default=None)
 a = ap.parse_args()
 
