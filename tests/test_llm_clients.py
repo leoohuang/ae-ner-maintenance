@@ -41,7 +41,7 @@ def test_compat_sends_configured_temperature():
 def test_openrouter_models_are_pinned_to_one_provider_without_fallbacks():
     cfgs = yaml.safe_load(open(ROOT / "configs/llm_models.yaml"))
     routed = {k: c for k, c in cfgs.items() if "openrouter.ai" in c.get("base_url", "")}
-    assert set(routed) == {"claude-opus-5-5", "claude-haiku-5-5", "gemini-4-carbon", "qwen4-max"}
+    assert set(routed) == set(cfgs) - {"qwen3.8-27b"}       # every API model; amendment 5
     for c in routed.values():
         p = c["extra_body"]["provider"]
         assert len(p["order"]) == 1 and p["allow_fallbacks"] is False and p["require_parameters"] is True

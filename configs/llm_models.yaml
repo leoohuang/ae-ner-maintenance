@@ -2,16 +2,24 @@
 # provider: openai (Responses API), compat (OpenAI-compatible chat API), anthropic, google, local.
 # Settings not listed are left at the provider default; what is actually sent is logged per call.
 
+# Amendment 5: the OpenAI and DeepSeek models also go through OpenRouter, pinned the same way.
 gpt-6-astra:
-  provider: openai
-  model: gpt-6-astra
-  reasoning_effort: low          # lowest level; "none" not supported, no custom temperature
+  provider: compat
+  model: openai/gpt-6-astra
+  base_url: https://openrouter.ai/api/v1
+  key_env: OPENROUTER_API_KEY
+  extra_body:                    # lowest level; "none" not supported, no custom temperature
+    reasoning: {effort: low}
+    provider: {order: [openai], allow_fallbacks: false, require_parameters: true}
 
 gpt-6-luna:
-  provider: openai
-  model: gpt-6-luna
-  reasoning_effort: none
-  temperature: 0                 # dropped if the API refuses it (amendment 1)
+  provider: compat
+  model: openai/gpt-6-luna
+  base_url: https://openrouter.ai/api/v1
+  key_env: OPENROUTER_API_KEY
+  extra_body:                    # no temperature through OpenRouter: provider default (amendment 5)
+    reasoning: {effort: none}
+    provider: {order: [openai], allow_fallbacks: false, require_parameters: true}
 
 # Amendment 4: Claude, Gemini and qwen4-max go through OpenRouter (one key), each pinned to the
 # model maker's own backend, no fallback to another backend, only backends that accept every parameter.
@@ -59,7 +67,10 @@ gemini-4-carbon:
 
 deepseek-v4-pro:
   provider: compat
-  model: deepseek-v4-pro
-  base_url: https://api.deepseek.com
-  key_env: DEEPSEEK_API_KEY
+  model: deepseek/deepseek-v4-pro-0813   # GA snapshot; the one DeepSeek itself serves on OpenRouter (amendment 5)
+  base_url: https://openrouter.ai/api/v1
+  key_env: OPENROUTER_API_KEY
   temperature: 0
+  extra_body:                    # non-thinking mode
+    reasoning: {enabled: false}
+    provider: {order: [deepseek], allow_fallbacks: false, require_parameters: true}
