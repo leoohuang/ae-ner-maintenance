@@ -347,6 +347,13 @@ Notes on the choices:
 - train_pool: 758 records, no reply failed the strict format, no span dropped, no retry; no reply contained a think block (logged per reply); at most 67 new tokens per reply. Tuning records: 20 records, no failure, micro-F1 0.807 (the tuning files stay on NAISS and are not used in any result).
 - All eight models have now labelled train_pool.
 
+### Amendment 9 (2026-11-17, before any RQ1–RQ3b computation): three definitions left open
+The exploratory figures above were drawn before this amendment; the definitions below were fixed before any of the pre-registered RQ1–RQ3b numbers were computed.
+1. RQ1 error types. Each model span that is not an exact match of a human span is one error: a **type error** if a human span has the same start and end; otherwise a **boundary error** if it overlaps a human span of the same type; otherwise a **boundary-and-type error** if it overlaps only human spans of other types (this case is not in the pre-registered list and is reported as a fifth type, not merged or dropped); otherwise an **extra span**. Each human span that no model span overlaps is a **missed span**.
+2. RQ1 shared errors. Two spans are the same when start, end and type are equal. "Wrong spans that at least six models agree on" is the number of distinct spans produced by at least six of the eight models and not in the human labels, divided by the number of distinct spans produced by at least six models. "Human spans that all eight models miss" counts human spans that no model produces exactly, divided by all human spans in train_pool.
+3. RQ2 "record in error" and error counts. A record is in error for a model when its span set differs from the human span set in any way. The number of span errors in a record is the number of the model's spans not in the human set plus the number of human spans not in the model's set.
+4. RQ1 length tertiles: train_pool records are split by token count at the 1/3 and 2/3 quantiles (records equal to a cut point go to the lower group).
+
 ## Exploratory overview figures (added 2026-11-17, not part of a pre-registered analysis)
 `scripts/plot_overview.py` draws three figures into `results/figures/`. They are descriptive and were made after the train_pool labelling; nothing below is a tested result, and the RQ1 analysis will be planned and run separately.
 
