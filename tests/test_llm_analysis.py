@@ -1,6 +1,7 @@
 import pytest
 
-from src.llm_analysis import (auroc, bootstrap_micro_f1, error_types, length_tertiles, record_f1,
+from src.llm_analysis import (apply_labels, auroc, bootstrap_micro_f1, choose_review, combined_rank,
+                              disagreement, error_types, length_tertiles, mean_ranks, record_f1,
                               shared_errors, span_errors, topk_error_share)
 
 P, A, S = "PhysicalObject", "Activity", "State"
@@ -79,3 +80,56 @@ def test_topk_error_share():
     assert topk_error_share(scores, errors, 1) == pytest.approx(0.75)
     assert topk_error_share(scores, errors, 2) == pytest.approx(0.75)
     assert topk_error_share(scores, errors, 4) == pytest.approx(1.0)
+
+
+# --- RQ2 signals ---
+def test_disagreement_is_one_minus_mean_f1_with_the_other_models():
+    labels = {"a": {1: [[0, 1, P]]}, "b": {1: [[0, 1, P]]}, "c": {1: []}}
+    assert disagreement(labels, "a", 1) == pytest.approx(1 - (1.0 + 0.0) / 2)
+    assert disagreement(labels, "c", 1) == pytest.approx(1.0)
+
+
+def test_mean_ranks_gives_rank_one_to_the_highest_and_averages_ties():
+    assert mean_ranks({1: 0.9, 2: 0.5, 3: 0.5, 4: 0.1}) == {1: 1.0, 2: 2.5, 3: 2.5, 4: 4.0}
+
+
+def test_combined_rank_is_the_mean_of_the_two_ranks():
+    unc = {1: 0.9, 2: 0.1, 3: 0.5}          # ranks 1, 3, 2
+    dis = {1: 0.0, 2: 0.8, 3: 0.4}          # ranks 3, 1, 2
+    assert combined_rank(unc, dis) == {1: 2.0, 2: 2.0, 3: 2.0}
+
+
+# --- RQ3 / RQ3b training labels ---
+def _records():
+    return [{"id": i, "tokens": ["a", "b"], "spans": [[0, 1, P]]} for i in range(6)]
+
+
+def test_apply_labels_replaces_only_train_pool_records_and_keeps_human_ones_for_review():
+    split = {"train_pool": [0, 1, 2], "val": [3], "test": [4, 5]}
+    llm = {0: [], 1: [[1, 2, A]], 2: [[0, 2, S]]}
+    out = apply_labels(_records(), llm, split, reviewed=[2])
+    assert out[0]["spans"] == [] and out[1]["spans"] == [[1, 2, A]]
+    assert out[2]["spans"] == [[0, 1, P]]                 # reviewed: human label
+    assert out[4]["spans"] == [[0, 1, P]]                 # test untouched
+    assert _records()[0]["spans"] == [[0, 1, P]]          # input not changed
+
+
+def test_apply_labels_refuses_labels_outside_train_pool_or_missing_records():
+    split = {"train_pool": [0, 1], "val": [3], "test": [4, 5]}
+    with pytest.raises(ValueError):
+        apply_labels(_records(), {0: [], 1: [], 4: []}, split)
+    with pytest.raises(ValueError):
+        apply_labels(_records(), {0: []}, split)
+
+
+def test_choose_review_signal_takes_the_lowest_combined_rank():
+    combined = {10: 3.0, 11: 1.0, 12: 2.0, 13: 4.0}
+    assert choose_review([10, 11, 12, 13], combined, 2, "signal", seed=1) == [11, 12]
+
+
+def test_choose_review_random_is_nested_over_k_and_reproducible():
+    pool = list(range(100))
+    r50 = choose_review(pool, None, 50, "random", seed=3)
+    r100 = choose_review(pool, None, 100, "random", seed=3)
+    assert r50 == r100[:50] and r50 == choose_review(pool, None, 50, "random", seed=3)
+    assert choose_review(pool, None, 0, "random", seed=3) == []

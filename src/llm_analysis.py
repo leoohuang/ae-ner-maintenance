@@ -100,3 +100,57 @@ def topk_error_share(scores, errors, k):
     order = sorted(scores, key=lambda i: (-scores[i], i))[:k]
     total = sum(errors.values())
     return sum(errors[i] for i in order) / total if total else 0.0
+
+
+# ---------- RQ2 信号 ----------
+def disagreement(labels, model, rid):
+    """LLM 分歧：1 减去这个模型与其他每个模型在这条记录上的 span F1 的平均。labels：{model: {id: spans}}。"""
+    others = [m for m in labels if m != model]
+    return 1.0 - sum(record_f1(labels[model][rid], labels[m][rid]) for m in others) / len(others)
+
+
+def mean_ranks(scores):
+    """{id: 分数} -> {id: 名次}，分数最高的是第 1 名；并列取平均名次。"""
+    order = sorted(scores, key=lambda i: -scores[i])
+    ranks, k = {}, 0
+    while k < len(order):
+        j = k
+        while j + 1 < len(order) and scores[order[j + 1]] == scores[order[k]]:
+            j += 1
+        for i in order[k:j + 1]:
+            ranks[i] = (k + j) / 2 + 1
+        k = j + 1
+    return ranks
+
+
+def combined_rank(uncertainty, disagree):
+    """综合信号：两个信号名次的平均，越小越可疑。"""
+    ru, rd = mean_ranks(uncertainty), mean_ranks(disagree)
+    return {i: (ru[i] + rd[i]) / 2 for i in ru}
+
+
+# ---------- RQ3 / RQ3b 的训练标签 ----------
+def apply_labels(records, llm, split, reviewed=()):
+    """返回 records 的副本：train_pool 的记录换成 LLM 的标签，reviewed 里的记录保留人工标签，
+    val 和 test 不动。LLM 标签必须正好覆盖 train_pool。"""
+    pool = set(split["train_pool"])
+    if set(llm) != pool:
+        raise ValueError("LLM labels must cover exactly the train_pool records")
+    keep = set(reviewed)
+    out = [dict(r) for r in records]
+    for i in pool - keep:
+        out[i]["spans"] = [list(s) for s in llm[i]]
+    return out
+
+
+def choose_review(pool_ids, combined, k, choice, seed):
+    """RQ3b：要人工检查的 k 条记录。signal：综合名次最小的 k 条（并列按 id）；
+    random：pool 按 1000 + seed 打乱后的前 k 条，所以不同 k 之间是嵌套的。"""
+    if choice == "signal":
+        return sorted(pool_ids, key=lambda i: (combined[i], i))[:k]
+    if choice == "random":
+        import random
+        order = list(pool_ids)
+        random.Random(1000 + seed).shuffle(order)
+        return order[:k]
+    raise ValueError(choice)
