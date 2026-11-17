@@ -117,8 +117,8 @@ def _local(cfg):
     # text only: the tokenizer is enough (AutoProcessor would also load the video processor,
     # which needs torchvision)
     tok = AutoTokenizer.from_pretrained(cfg["model"])
-    model = AutoModelForImageTextToText.from_pretrained(cfg["model"], dtype=torch.bfloat16,
-                                                        device_map="auto")
+    # one GH200 (96 GB) holds the ~56 GB of BF16 weights; device_map would need the accelerate package
+    model = AutoModelForImageTextToText.from_pretrained(cfg["model"], dtype=torch.bfloat16).to("cuda").eval()
 
     def call(prompt):
         msgs = [{"role": "user", "content": prompt}]
