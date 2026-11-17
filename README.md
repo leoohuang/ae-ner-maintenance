@@ -354,6 +354,29 @@ The exploratory figures above were drawn before this amendment; the definitions 
 3. RQ2 "record in error" and error counts. A record is in error for a model when its span set differs from the human span set in any way. The number of span errors in a record is the number of the model's spans not in the human set plus the number of human spans not in the model's set.
 4. RQ1 length tertiles: train_pool records are split by token count at the 1/3 and 2/3 quantiles (records equal to a cut point go to the lower group).
 
+## Results: RQ1, label quality (computed 2026-11-17)
+`scripts/rq1.py` → `results/llm/rq1.json`, `results/figures/rq1_f1.png`. Exact-match span F1 against the human labels on the 758 train_pool records, bootstrap 95% intervals over records (1,000 resamples, seed 0). Definitions as in amendment 9.
+
+| Model | micro-F1 [95% CI] | PhysicalObject | State | Process | Activity | Property* |
+|---|---|---|---|---|---|---|
+| `gemini-4-carbon` | 0.836 [0.824, 0.848] | 0.771 | 0.913 | 0.910 | 0.965 | 0.765 |
+| `gpt-6-astra` | 0.831 [0.819, 0.842] | 0.768 | 0.898 | 0.930 | 0.958 | 0.788 |
+| Claude Opus 5.5 | 0.820 [0.808, 0.833] | 0.744 | 0.904 | 0.935 | 0.964 | 0.769 |
+| `qwen4-max` | 0.789 [0.774, 0.804] | 0.702 | 0.908 | 0.893 | 0.941 | 0.712 |
+| Claude Haiku 5.5 | 0.779 [0.763, 0.795] | 0.704 | 0.874 | 0.860 | 0.907 | 0.706 |
+| `gpt-6-luna` | 0.765 [0.749, 0.781] | 0.678 | 0.884 | 0.856 | 0.915 | 0.676 |
+| `deepseek-v4-pro` | 0.751 [0.735, 0.769] | 0.651 | 0.848 | 0.834 | 0.924 | 0.453 |
+| `qwen3.8-27b` (self-hosted) | 0.714 [0.696, 0.732] | 0.582 | 0.874 | 0.886 | 0.898 | 0.719 |
+
+\* Property: 26 human spans in train_pool; unreliable.
+
+- In every family the large model scores higher than the small one (OpenAI 0.831 vs 0.765, Anthropic 0.820 vs 0.779, Qwen 0.789 vs 0.714). The intervals of the top three models overlap; `gemini-4-carbon` and `gpt-6-astra` are not distinguishable.
+- PhysicalObject is the weakest type for every model (0.58–0.77); Activity the strongest (0.90–0.97).
+- Length tertiles (373 short, 173 medium, 212 long records): medium-length records score lowest for seven of the eight models; the differences are small (mostly 0.02–0.05). Values per model in `rq1.json`.
+- Error types (share of each model's errors): boundary errors are 60–83%; the three best models have 82–83% boundary errors and 2% type errors; Claude Haiku 5.5, DeepSeek and `qwen3.8-27b` miss more spans (15–16%); DeepSeek has the most type errors (9%).
+- Shared errors: 1,994 distinct spans are produced by at least six models; 254 of them (12.7%) are not in the human labels. 120 of the 2,398 human spans (5.0%) are produced exactly by none of the eight models.
+- Models for RQ3 (highest and lowest micro-F1, by the point estimate as pre-registered): `gemini-4-carbon` and `qwen3.8-27b`.
+
 ## Exploratory overview figures (added 2026-11-17, not part of a pre-registered analysis)
 `scripts/plot_overview.py` draws three figures into `results/figures/`. They are descriptive and were made after the train_pool labelling; nothing below is a tested result, and the RQ1 analysis will be planned and run separately.
 
