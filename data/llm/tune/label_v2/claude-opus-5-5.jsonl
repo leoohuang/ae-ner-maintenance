@@ -1,0 +1,20 @@
+{"id": 53, "tokens": ["<id>", "bearings", "are", "shot"], "spans": [[1, 2, "PhysicalObject"], [3, 4, "State"]]}
+{"id": 970, "tokens": ["remove", "unserviceable", "air", "separator"], "spans": [[0, 1, "Activity"], [1, 2, "State"], [2, 4, "PhysicalObject"], [3, 4, "PhysicalObject"]]}
+{"id": 70, "tokens": ["<id>", "blown", "hose", "on", "boom"], "spans": [[1, 2, "State"], [2, 3, "PhysicalObject"], [4, 5, "PhysicalObject"]]}
+{"id": 163, "tokens": ["<id>", "change", "out", "position", "<num>", "<num>", "and", "<num>", "tyres"], "spans": [[1, 3, "Activity"], [8, 9, "PhysicalObject"]]}
+{"id": 102, "tokens": ["<id>", "broken", "joystick", "PO"], "spans": [[1, 2, "State"], [2, 3, "PhysicalObject"]]}
+{"id": 898, "tokens": ["flow", "battery", "power"], "spans": [[1, 2, "PhysicalObject"], [2, 3, "Property"]]}
+{"id": 361, "tokens": ["<id>", "rotate", "rear", "tyres"], "spans": [[1, 2, "Activity"], [3, 4, "PhysicalObject"]]}
+{"id": 998, "tokens": ["repair", "wiring", "at", "fan", "resistor"], "spans": [[0, 1, "Activity"], [1, 2, "PhysicalObject"], [3, 5, "PhysicalObject"], [4, 5, "PhysicalObject"]]}
+{"id": 626, "tokens": ["<id>", "-", "grease", "system", "fault"], "spans": [[2, 4, "PhysicalObject"], [4, 5, "State"]]}
+{"id": 932, "tokens": ["number", "<num>", "slew", "pump", "contamination", "switch", "unserviceable"], "spans": [[2, 4, "PhysicalObject"], [3, 4, "PhysicalObject"], [4, 6, "PhysicalObject"], [5, 6, "PhysicalObject"], [6, 7, "State"]]}
+{"id": 487, "tokens": ["oil", "leak", "from", "behind", "water", "pump"], "spans": [[0, 1, "PhysicalObject"], [1, 2, "Process"], [4, 6, "PhysicalObject"], [5, 6, "PhysicalObject"]]}
+{"id": 654, "tokens": ["<id>", "-", "left", "hand", "corner", "bonnet", "cracked"], "spans": [[5, 6, "PhysicalObject"], [6, 7, "State"]]}
+{"id": 290, "tokens": ["operator", "cabin", "air", "conditioner", "air", "outlet", "modifications"], "spans": [[0, 2, "PhysicalObject"], [1, 2, "PhysicalObject"], [2, 4, "PhysicalObject"], [3, 4, "PhysicalObject"], [4, 6, "PhysicalObject"], [5, 6, "PhysicalObject"], [6, 7, "Activity"]]}
+{"id": 806, "tokens": ["air", "conditioner", "fan", "speed", "resistor", "not", "working", "<num>", "and", "<num>"], "spans": [[0, 2, "PhysicalObject"], [0, 5, "PhysicalObject"], [2, 3, "PhysicalObject"], [3, 5, "PhysicalObject"], [4, 5, "PhysicalObject"], [5, 7, "State"]]}
+{"id": 1074, "tokens": ["window", "frame", "needs", "repair"], "spans": [[0, 2, "PhysicalObject"], [1, 2, "PhysicalObject"], [2, 3, "State"], [3, 4, "Activity"]]}
+{"id": 1022, "tokens": ["replace", "inverter", "batteries"], "spans": [[0, 1, "Activity"], [1, 3, "PhysicalObject"], [2, 3, "PhysicalObject"]]}
+{"id": 576, "tokens": ["<id>", "-", "change", "out", "right", "hand", "stick", "cylinder"], "spans": [[2, 4, "Activity"], [6, 8, "PhysicalObject"], [7, 8, "PhysicalObject"]]}
+{"id": 1012, "tokens": ["replace", "cracked", "glass", "in", "entry", "door"], "spans": [[0, 1, "Activity"], [1, 2, "State"], [2, 3, "PhysicalObject"], [4, 6, "PhysicalObject"], [5, 6, "PhysicalObject"]]}
+{"id": 55, "tokens": ["<id>", "belt", "on", "alternator"], "spans": [[1, 2, "PhysicalObject"], [3, 4, "PhysicalObject"]]}
+{"id": 172, "tokens": ["<id>", "change", "out", "right", "hand", "steering", "cylinder"], "spans": [[1, 3, "Activity"], [5, 7, "PhysicalObject"], [6, 7, "PhysicalObject"]]}
