@@ -6,6 +6,7 @@
 2 test F1 per type in the active-learning runs (Mac main results, mean of 10 seeds).
 3 the 7 API LLMs on train_pool: label count per type relative to gold, and F1 per type.
   This is a first look; the RQ1 analysis is planned separately.
+4 the same LLM labels: what kind of disagreement with gold, per model and per type.
 """
 import json, sys
 from collections import Counter, defaultdict
@@ -112,3 +113,44 @@ ax[1].set_xticks(range(6), ORDER + ["all (micro)"], fontsize=8.5); ax[1].set_yti
 ax[1].grid(False); ax[1].set_title("Agreement with human labels (F1), by type", loc="left", fontsize=11)
 fig.suptitle("7 LLMs on train_pool (758 records) - first look, not the pre-registered RQ1 analysis", x=0.01, ha="left", fontsize=12)
 fig.tight_layout(); fig.savefig(OUT / "3_llm_by_type.png", dpi=150); plt.close(fig)
+
+# ---------- Figure 4: kinds of disagreement with gold (exploratory) ----------
+KINDS = [("bound", "Same type, boundary or nesting differs"), ("missed", "Missed (nothing marked there)"),
+         ("bt", "Boundary and type differ"), ("extra", "Extra (no human label there)"), ("type", "Same words, wrong type")]
+ov = lambda a, b: a[0] < b[1] and b[0] < a[1]
+per_model, per_type = {}, defaultdict(Counter)
+for m in MODELS:
+    P = {json.loads(l)["id"]: json.loads(l)["spans"] for l in open(ROOT / f"data/llm/{m}.jsonl")}
+    c = Counter()
+    for i in ids:
+        G = {tuple(x) for x in recs[i]["spans"]}; Q = {tuple(x) for x in P[i]}
+        for p in Q - G:
+            k = ("type" if any(g[:2] == p[:2] for g in G) else "bound" if any(ov(g, p) and g[2] == p[2] for g in G)
+                 else "bt" if any(ov(g, p) for g in G) else "extra")
+            c[k] += 1; per_type[p[2]][k] += 1
+        for g in G - Q:
+            if not any(ov(g, p) for p in Q): c["missed"] += 1; per_type[g[2]]["missed"] += 1
+    per_model[m] = c
+fig, ax = plt.subplots(1, 2, figsize=(16, 5.2))
+def stack(a, rows, labels, title):
+    y = np.arange(len(rows))[::-1]
+    for r, yy in zip(rows, y):
+        tot = sum(r.values()); left = 0
+        for k, (key, lab) in enumerate(KINDS):
+            w = r[key] / tot
+            a.barh(yy, w, left=left, color=CAT[k], height=0.62, edgecolor=SURF, linewidth=2,
+                   label=lab if yy == y[0] else None)
+            if w >= 0.06: a.text(left + w / 2, yy, f"{w:.0%}", ha="center", va="center", fontsize=8.5,
+                                  color="white" if k == 0 else INK)
+            left += w
+        a.text(1.01, yy, f"n={tot:,}", va="center", fontsize=8.5, color=INK2)
+    a.set_yticks(y, labels); a.set_xlim(0, 1); a.grid(False)
+    a.xaxis.set_major_formatter(matplotlib.ticker.PercentFormatter(1.0))
+    a.set_title(title, loc="left", fontsize=11)
+stack(ax[0], [per_model[m] for m in MODELS], MODELS, "Per model: what kind of disagreement")
+stack(ax[1], [per_type[t] for t in ORDER], ORDER, "Per type (7 models together): what kind of disagreement")
+ax[0].legend(ncol=3, fontsize=8.5, frameon=False, loc="upper left", bbox_to_anchor=(0, -0.08))
+fig.suptitle("Where the 7 LLMs differ from the human labels on train_pool - first look, not the RQ1 analysis\n"
+             "(n = LLM spans that do not match exactly, plus human spans with nothing marked there; exact matches left out)",
+             x=0.01, ha="left", fontsize=11)
+fig.tight_layout(); fig.savefig(OUT / "4_llm_disagreement_kinds.png", dpi=150); plt.close(fig)
