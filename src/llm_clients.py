@@ -115,7 +115,7 @@ def _local(cfg):
     import torch
     from transformers import AutoModelForImageTextToText, AutoProcessor
     proc = AutoProcessor.from_pretrained(cfg["model"])
-    model = AutoModelForImageTextToText.from_pretrained(cfg["model"], torch_dtype=torch.bfloat16,
+    model = AutoModelForImageTextToText.from_pretrained(cfg["model"], dtype=torch.bfloat16,
                                                         device_map="auto")
 
     def call(prompt):
