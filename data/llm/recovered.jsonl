@@ -1,0 +1,10 @@
+{"model": "claude-haiku-5-5", "id": 505, "spans": [[3, 4, "PhysicalObject"], [3, 5, "PhysicalObject"], [5, 6, "PhysicalObject"], [6, 7, "PhysicalObject"], [8, 9, "PhysicalObject"]], "drops": {}, "attempt": 0}
+{"model": "claude-haiku-5-5", "id": 799, "spans": [[1, 3, "PhysicalObject"], [3, 5, "State"]], "drops": {}, "attempt": 0}
+{"model": "claude-haiku-5-5", "id": 979, "spans": [[0, 1, "Activity"], [1, 2, "Property"], [6, 8, "PhysicalObject"]], "drops": {}, "attempt": 0}
+{"model": "claude-opus-5-5", "id": 16, "spans": [[1, 2, "PhysicalObject"], [2, 3, "Process"]], "drops": {}, "attempt": 0}
+{"model": "claude-opus-5-5", "id": 90, "spans": [[1, 2, "Property"], [2, 3, "State"]], "drops": {}, "attempt": 0}
+{"model": "claude-opus-5-5", "id": 409, "spans": [[1, 4, "PhysicalObject"], [2, 4, "PhysicalObject"], [3, 4, "PhysicalObject"], [4, 5, "Process"]], "drops": {}, "attempt": 0}
+{"model": "claude-opus-5-5", "id": 422, "spans": [[0, 2, "Activity"]], "drops": {}, "attempt": 0}
+{"model": "claude-opus-5-5", "id": 453, "spans": [[0, 2, "PhysicalObject"], [1, 2, "PhysicalObject"], [2, 3, "State"]], "drops": {}, "attempt": 0}
+{"model": "qwen4-max", "id": 339, "spans": [[0, 1, "Property"], [4, 6, "PhysicalObject"]], "drops": {}, "attempt": 0}
+{"model": "qwen4-max", "id": 739, "spans": [[4, 7, "Activity"], [5, 7, "Activity"]], "drops": {}, "attempt": 0}
