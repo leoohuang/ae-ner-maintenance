@@ -3,6 +3,7 @@ from pathlib import Path
 import torch, yaml
 from src.model import finetune, predict, decode
 from src.evaluate import evaluate
+from src.llm_analysis import apply_labels
 from src.pool import (GRID, SEEDS, budgets, pool_tokens, random_order,
                       random_nested_sets, token_lengths)
 
@@ -11,6 +12,7 @@ ap = argparse.ArgumentParser()
 ap.add_argument("--fracs", nargs="+", type=float, default=GRID)
 ap.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
 ap.add_argument("--out", default="results/random.jsonl")
+ap.add_argument("--labels", default=None, help="LLM labels for train_pool (RQ3), e.g. data/llm/gemini-4-carbon.jsonl")
 a = ap.parse_args()
 
 cfg = yaml.safe_load(open(ROOT / "configs/base.yaml"))
@@ -21,6 +23,9 @@ split = json.load(open(ROOT / "data/splits/split_v1.json"))
 pool = split["train_pool"]
 val = [records[i] for i in split["val"]]
 test = [records[i] for i in split["test"]]
+# RQ3: train on an LLM's labels; val and test keep the human labels
+train_recs = records if not a.labels else apply_labels(
+    records, {json.loads(l)["id"]: json.loads(l)["spans"] for l in open(ROOT / a.labels)}, split)
 bud = budgets(pool_tokens(records, pool))
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 
@@ -45,9 +50,9 @@ for seed in a.seeds:
             continue
         t0 = time.time()
         chosen, used = sets[bud[frac]]
-        model, tok = finetune(cfg["encoder"], [records[i] for i in chosen], cfg, seed, device)
+        model, tok = finetune(cfg["encoder"], [train_recs[i] for i in chosen], cfg, seed, device)
         mt, mv = score(model, tok, test), score(model, tok, val)
-        row = {"strategy": "random", "frac": frac, "seed": seed,
+        row = {"strategy": "random", "labels": a.labels or "human", "frac": frac, "seed": seed,
                "n_records": len(chosen), "tokens_used": used, "budget": bud[frac],
                "test_micro_f1": mt["micro_f1"], "test_precision": mt["precision"],
                "test_recall": mt["recall"], "test_macro_f1": mt["macro_f1"],

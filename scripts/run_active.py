@@ -4,6 +4,7 @@ import numpy as np
 import torch, yaml
 from src.model import finetune, predict, decode
 from src.evaluate import evaluate
+from src.llm_analysis import apply_labels
 from src.pool import (GRID, SEEDS, budgets, pool_tokens, random_order,
                       random_nested_sets, fill_budget, token_lengths)
 from src.strategies import rank_by_uncertainty, record_score
@@ -16,6 +17,7 @@ ap.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
 ap.add_argument("--max-frac", type=float, default=0.80)
 ap.add_argument("--strategy", choices=["uncertainty", "hybrid"], default="uncertainty")
 ap.add_argument("--out", default=None)
+ap.add_argument("--labels", default=None, help="LLM labels for train_pool (RQ3), e.g. data/llm/gemini-4-carbon.jsonl")
 a = ap.parse_args()
 a.out = a.out or f"results/{a.strategy}.jsonl"
 
@@ -28,6 +30,9 @@ split = json.load(open(ROOT / "data/splits/split_v1.json"))
 pool = split["train_pool"]
 val = [records[i] for i in split["val"]]
 test = [records[i] for i in split["test"]]
+# RQ3: train on an LLM's labels; val and test keep the human labels; selection is unchanged
+train_recs = records if not a.labels else apply_labels(
+    records, {json.loads(l)["id"]: json.loads(l)["spans"] for l in open(ROOT / a.labels)}, split)
 bud = budgets(pool_tokens(records, pool))
 device = "cuda" if torch.cuda.is_available() else ("mps" if torch.backends.mps.is_available() else "cpu")
 AL_FRACS = [f for f in GRID if f < 1.0 and f <= a.max_frac]
@@ -60,9 +65,9 @@ for seed in a.seeds:
     for k, frac in enumerate(AL_FRACS):
         t0 = time.time()
         assert len(labelled) == len(set(labelled)) and used <= bud[frac]
-        model, tok = finetune(cfg["encoder"], [records[i] for i in labelled], cfg, seed, device)
+        model, tok = finetune(cfg["encoder"], [train_recs[i] for i in labelled], cfg, seed, device)
         mt, mv = score(model, tok, test), score(model, tok, val)
-        row = {"strategy": a.strategy, "frac": frac, "seed": seed,
+        row = {"strategy": a.strategy, "labels": a.labels or "human", "frac": frac, "seed": seed,
                "n_records": len(labelled), "tokens_used": used, "budget": bud[frac],
                "test_micro_f1": mt["micro_f1"], "test_precision": mt["precision"],
                "test_recall": mt["recall"], "test_macro_f1": mt["macro_f1"],
