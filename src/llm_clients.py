@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 
 KEY_ENV = {"openai": "OPENAI_API_KEY", "anthropic": "ANTHROPIC_API_KEY", "google": "GEMINI_API_KEY"}
+# _anthropic and _google are kept for direct provider access; amendment 4 routes these models through OpenRouter
 MAX_TOKENS = 16000     # reasoning tokens count towards this limit; only generated tokens are billed
 
 
@@ -50,20 +51,25 @@ def _openai(cfg):
     return call
 
 
-def _compat(cfg):
-    from openai import OpenAI
-    client = OpenAI(api_key=_key(cfg), base_url=cfg["base_url"])
+def _compat(cfg, client=None):
+    """OpenAI 兼容的 chat 接口：DeepSeek 官方，以及经 OpenRouter 调用的模型（amendment 4）。"""
+    if client is None:
+        from openai import OpenAI
+        client = OpenAI(api_key=_key(cfg), base_url=cfg["base_url"])
 
     def call(prompt):
-        kw = {"model": cfg["model"], "messages": [{"role": "user", "content": prompt}],
-              "max_tokens": MAX_TOKENS, "temperature": cfg["temperature"]}
+        kw = {"model": cfg["model"], "messages": [{"role": "user", "content": prompt}], "max_tokens": MAX_TOKENS}
+        if cfg.get("temperature") is not None:
+            kw["temperature"] = cfg["temperature"]
         if cfg.get("extra_body"):
             kw["extra_body"] = cfg["extra_body"]
         r = client.chat.completions.create(**kw)
         msg = r.choices[0].message
         sent = {k: v for k, v in kw.items() if k not in ("messages", "model")}
         return msg.content or "", {"model_version": r.model, "sent": sent,
-                                   "reasoning_returned": bool(getattr(msg, "reasoning_content", None)),
+                                   "served_by": (getattr(r, "model_extra", None) or {}).get("provider"),
+                                   "reasoning_returned": bool(getattr(msg, "reasoning_content", None)
+                                                              or getattr(msg, "reasoning", None)),
                                    "usage": r.usage.model_dump() if r.usage else None}
     return call
 

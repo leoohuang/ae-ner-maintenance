@@ -13,23 +13,35 @@ gpt-6-luna:
   reasoning_effort: none
   temperature: 0                 # dropped if the API refuses it (amendment 1)
 
+# Amendment 4: Claude, Gemini and qwen4-max go through OpenRouter (one key), each pinned to the
+# model maker's own backend, no fallback to another backend, only backends that accept every parameter.
 claude-opus-5-5:
-  provider: anthropic
-  model: claude-opus-5-5
-  effort: low                    # thinking cannot be switched off; lowest effort. No sampling parameters (amendment 3)
+  provider: compat
+  model: anthropic/claude-opus-5.5
+  base_url: https://openrouter.ai/api/v1
+  key_env: OPENROUTER_API_KEY
+  extra_body:                    # thinking cannot be switched off; lowest effort. No sampling parameters (amendment 3)
+    reasoning: {effort: low}
+    provider: {order: [anthropic], allow_fallbacks: false, require_parameters: true}
 
 claude-haiku-5-5:
-  provider: anthropic
-  model: claude-haiku-5-5
-  thinking: disabled             # no sampling parameters (amendment 3)
+  provider: compat
+  model: anthropic/claude-haiku-5.5
+  base_url: https://openrouter.ai/api/v1
+  key_env: OPENROUTER_API_KEY
+  extra_body:                    # thinking off; no sampling parameters (amendment 3)
+    reasoning: {enabled: false}
+    provider: {order: [anthropic], allow_fallbacks: false, require_parameters: true}
 
 qwen4-max:
   provider: compat
-  model: qwen4-max
-  base_url: https://dashscope-intl.aliyuncs.com/compatible-mode/v1
-  key_env: DASHSCOPE_API_KEY
+  model: qwen/qwen4-max
+  base_url: https://openrouter.ai/api/v1
+  key_env: OPENROUTER_API_KEY
   temperature: 0
-  extra_body: {enable_thinking: false}
+  extra_body:                    # thinking off
+    reasoning: {enabled: false}
+    provider: {order: [alibaba], allow_fallbacks: false, require_parameters: true}
 
 qwen3.8-27b:
   provider: local                # self-hosted on the NAISS GPU (scripts/gpu_label_job.sh)
@@ -37,9 +49,13 @@ qwen3.8-27b:
   enable_thinking: false         # greedy decoding
 
 gemini-4-carbon:
-  provider: google
-  model: gemini-4-carbon
-  thinking_level: low            # lowest level; temperature is ignored by the API
+  provider: compat
+  model: google/gemini-4-carbon
+  base_url: https://openrouter.ai/api/v1
+  key_env: OPENROUTER_API_KEY
+  extra_body:                    # lowest thinking level; temperature is ignored by the model
+    reasoning: {effort: low}
+    provider: {order: [google-ai-studio], allow_fallbacks: false, require_parameters: true}
 
 deepseek-v4-pro:
   provider: compat
