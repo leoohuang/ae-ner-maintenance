@@ -315,3 +315,23 @@ Notes on the choices:
 - DeepSeek: on OpenRouter only `deepseek/deepseek-v4-pro-0813` (described by OpenRouter as the GA release of DeepSeek V4 Pro) is served by DeepSeek itself; the undated `deepseek/deepseek-v4-pro` entry is served only by third-party hosts, most of them quantised. The DeepSeek slot therefore uses `deepseek/deepseek-v4-pro-0813`. DeepSeek's backend may use inputs for training, so the OpenRouter account allows such backends while this protocol's labelling runs. MaintIE is public data; no other data is sent through this account while the setting is on.
 - `gpt-6-luna`: OpenRouter's OpenAI backend accepts no temperature parameter, so it runs at the provider default (amendment 1 allowed this: "temperature 0 if accepted, else default"). `reasoning.effort` is `none` for `gpt-6-luna` and `low` for `gpt-6-astra`; DeepSeek runs with `reasoning.enabled` false and temperature 0.
 - Smoke test (2026-11-17, one tuning record each): all models that ran returned valid JSON, were served by the pinned backend, and reported 0 reasoning tokens.
+
+### Amendment 6 (2026-11-17, before labelling train_pool): prompt frozen
+- The labelling prompt is frozen as `configs/prompts/label_v2.md` (SHA-1 `58c5057f9899`…), with the 5 fixed val examples (seed 2026). Each raw record also logs the SHA-1 of the full prompt it was sent.
+- Tuning log: 2 versions were tried, below the limit of 3. Both runs are kept in `data/llm/tune/label_v1/` and `data/llm/tune/label_v2/`. No reply failed to parse and no span was dropped in either version. v2 adds three rules after reading the v1 errors: a word that only says what kind of object it is is not marked on its own, position words are not part of an object, and words saying that work is needed are State.
+
+| Model | v1 micro-F1 | v2 micro-F1 |
+|---|---|---|
+| `gpt-6-astra` | 0.841 | 0.870 |
+| `gpt-6-luna` | 0.894 | 0.806 |
+| `claude-opus-5-5` | 0.853 | 0.891 |
+| `claude-haiku-5-5` | 0.820 | 0.885 |
+| `gemini-4-carbon` | 0.832 | 0.879 |
+| `qwen4-max` | 0.773 | 0.868 |
+| `deepseek-v4-pro` | 0.754 | 0.783 |
+| mean | 0.824 | 0.855 |
+
+- v2 is better on mean F1 and for six of the seven models; `gpt-6-luna` is worse with v2. All models keep the same prompt, as pre-registered. The 20 records hold about 60 gold spans, so differences of a few points between models are within noise and are not a result of this protocol; RQ1 uses train_pool.
+- No third version was tried: most remaining v1 and v2 errors are on nested object names where the gold labels themselves are inconsistent (for example "steering cylinder" has "cylinder" nested, "stick cylinder" does not), which a prompt rule cannot fix without fitting these 20 records.
+- `Qwen/Qwen3.8-27B` (self-hosted on NAISS) was not part of tuning; it uses the frozen v2 prompt unchanged.
+- Cost of tuning: about USD 0.39 for the seven API models.
