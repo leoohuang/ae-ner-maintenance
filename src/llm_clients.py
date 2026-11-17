@@ -113,20 +113,25 @@ def _google(cfg):
 def _local(cfg):
     """在 NAISS GPU 上本地运行开源模型，贪心解码，关闭 thinking。"""
     import torch
-    from transformers import AutoModelForImageTextToText, AutoProcessor
-    proc = AutoProcessor.from_pretrained(cfg["model"])
+    from transformers import AutoModelForImageTextToText, AutoTokenizer
+    # text only: the tokenizer is enough (AutoProcessor would also load the video processor,
+    # which needs torchvision)
+    tok = AutoTokenizer.from_pretrained(cfg["model"])
     model = AutoModelForImageTextToText.from_pretrained(cfg["model"], dtype=torch.bfloat16,
                                                         device_map="auto")
 
     def call(prompt):
-        msgs = [{"role": "user", "content": [{"type": "text", "text": prompt}]}]
-        inp = proc.apply_chat_template(msgs, add_generation_prompt=True, tokenize=True, return_dict=True,
-                                       return_tensors="pt", enable_thinking=cfg["enable_thinking"]).to(model.device)
+        msgs = [{"role": "user", "content": prompt}]
+        inp = tok.apply_chat_template(msgs, add_generation_prompt=True, tokenize=True, return_dict=True,
+                                      return_tensors="pt", enable_thinking=cfg["enable_thinking"]).to(model.device)
         out = model.generate(**inp, max_new_tokens=MAX_TOKENS, do_sample=False)
-        text = proc.decode(out[0][inp["input_ids"].shape[1]:], skip_special_tokens=True)
+        new = out[0][inp["input_ids"].shape[1]:]
+        text = tok.decode(new, skip_special_tokens=True)
         return text, {"model_version": cfg["model"],
                       "sent": {"do_sample": False, "enable_thinking": cfg["enable_thinking"],
-                               "max_new_tokens": MAX_TOKENS}}
+                               "max_new_tokens": MAX_TOKENS},
+                      "usage": {"completion_tokens": len(new), "prompt_tokens": inp["input_ids"].shape[1],
+                                "thinking_in_output": "<think>" in tok.decode(new)}}
     return call
 
 
