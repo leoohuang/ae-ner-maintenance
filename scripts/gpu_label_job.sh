@@ -12,14 +12,21 @@
 
 set -e
 cd ~/ae-ner-maintenance
+export HF_HOME=${HF_HOME:-/nobackup/proj/disk/naiss2026-4-1472/personal/$USER/hf}   # about 56 GB; home has only 30 GB
+
+if [ "$1" = download ]; then
+  # login node is x86 and ~/venv-gpu is for the aarch64 GPU nodes, so use a small separate x86 venv
+  [ -x ~/venv-dl/bin/hf ] || { python3 -m venv ~/venv-dl && ~/venv-dl/bin/pip install -q huggingface_hub; }
+  ~/venv-dl/bin/hf download Qwen/Qwen3.8-27B
+  exit 0
+fi
+
 module purge
 ml GPU/buildtool-easybuild/5.2.1-hpca3ef7d197 GCC/14.3.0 OpenMPI/5.0.8 PyTorch/2.9.1-CUDA-12.9.1
 source ~/venv-gpu/bin/activate
 export PYTHONPATH=$VIRTUAL_ENV/lib/python3.13/site-packages:$PWD:$PYTHONPATH
-export HF_HOME=${HF_HOME:-/nobackup/proj/disk/naiss2026-4-1472/personal/$USER/hf}   # about 56 GB; home has only 30 GB
 
 case "$1" in
-  download)        hf download Qwen/Qwen3.8-27B ;;
   tune|train_pool) export HF_HUB_OFFLINE=1
                    nvidia-smi --query-gpu=name,memory.total --format=csv
                    python scripts/label_llm.py --model qwen3.8-27b --split "$1" ;;
