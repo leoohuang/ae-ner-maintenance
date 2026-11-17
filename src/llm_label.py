@@ -42,6 +42,35 @@ def parse_reply(text, n_tokens):
     return [list(s) for s in sorted(seen)], drops
 
 
+def parse_reply_lenient(text, n_tokens):
+    """Amendment 7：严格解析失败时，从回复里找出最后一个带 "spans" 的 JSON 对象
+    （模型在 JSON 前写了解释，或者后面多了 </s> 之类的结束符）。词段检查规则与 parse_reply 相同。"""
+    spans, drops = parse_reply(text, n_tokens)
+    if spans is not None or not isinstance(text, str):
+        return spans, drops
+    dec, found = json.JSONDecoder(), None
+    for i, ch in enumerate(text):
+        if ch == "{":
+            try:
+                obj, _ = dec.raw_decode(text, i)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(obj, dict) and isinstance(obj.get("spans"), list):
+                found = obj
+    if found is None:
+        return None, Counter()
+    return parse_reply(json.dumps(found), n_tokens)
+
+
+def recover_failed(raw, n_tokens):
+    """对严格解析失败的记录，按顺序找第一个能宽松解析的回复；都不行返回 None。不重新调用模型。"""
+    for k, a in enumerate(raw["attempts"]):
+        spans, drops = parse_reply_lenient(a["text"], n_tokens)
+        if spans is not None:
+            return {"spans": spans, "drops": dict(drops), "attempt": k}
+    return None
+
+
 def assert_not_test(ids, split):
     """预注册：test 集永远不发给任何 LLM。碰到 test 的记录直接报错。"""
     bad = set(ids) & set(split["test"])

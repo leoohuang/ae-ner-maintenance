@@ -2,8 +2,8 @@ import json
 
 import pytest
 
-from src.llm_label import (assert_not_test, format_record, label_one, parse_reply, render_prompt,
-                           run_labelling, val_subsets)
+from src.llm_label import (assert_not_test, format_record, label_one, parse_reply, parse_reply_lenient,
+                           recover_failed, render_prompt, run_labelling, val_subsets)
 
 
 def test_plain_json_is_parsed():
@@ -136,3 +136,34 @@ def test_rate_limits_are_waited_out_for_a_few_minutes():
     res = label_one(m, "p", 2, sleep=waits.append)
     assert not res["failed"] and m.calls == 9
     assert max(waits) <= 60 and sum(waits) >= 180
+
+
+# amendment 7: replies that fail the strict format are recovered from the logged text, no new calls
+def test_lenient_parse_takes_the_json_after_an_explanation():
+    text = 'In "air leak", "air" is the material.\n\n{"spans": [[1, 2, "PhysicalObject"], [2, 3, "Process"]]}'
+    assert parse_reply(text, 3)[0] is None
+    assert parse_reply_lenient(text, 3)[0] == [[1, 2, "PhysicalObject"], [2, 3, "Process"]]
+
+
+def test_lenient_parse_ignores_a_trailing_end_token():
+    assert parse_reply_lenient('{"spans": [[0, 1, "Property"]]}</s>', 2)[0] == [[0, 1, "Property"]]
+
+
+def test_lenient_parse_uses_the_last_spans_object_and_still_checks_spans():
+    text = 'first {"spans": [[0, 1, "State"]]} then {"note": 1} final {"spans": [[1, 2, "State"], [5, 9, "State"]]}'
+    spans, drops = parse_reply_lenient(text, 3)
+    assert spans == [[1, 2, "State"]] and drops["out_of_range"] == 1
+
+
+def test_lenient_parse_still_fails_without_any_spans_object():
+    assert parse_reply_lenient("Working through the record: 0 is an Activity", 3)[0] is None
+
+
+def test_recover_failed_uses_the_first_attempt_that_parses_leniently():
+    raw = {"failed": True, "attempts": [{"text": "no json"}, {"text": 'ok {"spans": [[0, 1, "State"]]}'},
+                                        {"text": 'x {"spans": []}'}]}
+    assert recover_failed(raw, 2) == {"spans": [[0, 1, "State"]], "drops": {}, "attempt": 1}
+
+
+def test_recover_failed_returns_none_when_nothing_parses():
+    assert recover_failed({"failed": True, "attempts": [{"text": "a"}, {"text": "b"}]}, 2) is None
