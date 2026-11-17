@@ -67,7 +67,7 @@ def render_prompt(template, rec, examples):
     return template.replace("{examples}", shown).replace("{record}", format_record(rec))
 
 
-def label_one(call, prompt, n_tokens, max_parse_retries=2, max_net_retries=5, sleep=time.sleep):
+def label_one(call, prompt, n_tokens, max_parse_retries=2, max_net_retries=10, sleep=time.sleep):
     """调用一次模型并解析。预注册：解析不了最多重试 2 次，之后记为失败、这条不标实体。
     网络错误（call 抛异常）另算，等一会儿再试，连续失败 max_net_retries 次就把异常抛出去，
     整个运行停下，之后可以接着跑。"""
@@ -80,7 +80,7 @@ def label_one(call, prompt, n_tokens, max_parse_retries=2, max_net_retries=5, sl
             except Exception:
                 if k == max_net_retries - 1:
                     raise
-                sleep(2 ** k)
+                sleep(min(2 ** k, 60))          # waits out rate limits (about 6 minutes in all)
         spans, drops = parse_reply(text, n_tokens)
         attempts.append({"text": text, "meta": meta})
         if spans is not None:

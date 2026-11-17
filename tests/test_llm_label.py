@@ -127,3 +127,12 @@ def test_run_skips_labelled_records_and_writes_both_files(tmp_path):
     assert rows[0]["tokens"] == ["a", "b"]
     info = [json.loads(l) for l in open(raw)]
     assert info[2]["model"] == "fake" and info[2]["attempts"][0]["text"] == '{"spans": []}'
+
+
+def test_rate_limits_are_waited_out_for_a_few_minutes():
+    # new OpenRouter accounts are limited to 20 requests per minute per model
+    waits = []
+    m = FakeModel([ConnectionError()] * 8 + ['{"spans": []}'])
+    res = label_one(m, "p", 2, sleep=waits.append)
+    assert not res["failed"] and m.calls == 9
+    assert max(waits) <= 60 and sum(waits) >= 180
