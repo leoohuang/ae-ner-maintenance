@@ -16,7 +16,7 @@ module purge
 ml GPU/buildtool-easybuild/5.2.1-hpca3ef7d197 GCC/14.3.0 OpenMPI/5.0.8 PyTorch/2.9.1-CUDA-12.9.1
 source ~/venv-gpu/bin/activate
 export PYTHONPATH=$VIRTUAL_ENV/lib/python3.13/site-packages:$PWD:$PYTHONPATH
-export HF_HOME=${HF_HOME:-$HOME/hf}          # about 56 GB of weights
+export HF_HOME=${HF_HOME:-/nobackup/proj/disk/naiss2026-4-1472/$USER/hf}   # about 56 GB; home has only 30 GB
 
 case "$1" in
   download)        hf download Qwen/Qwen3.8-27B ;;
