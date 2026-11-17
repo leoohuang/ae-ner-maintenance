@@ -1,0 +1,102 @@
+"""RQ1 和 RQ2 的分析函数（LLM annotation protocol；定义见 README amendment 9）。
+标签都是 [start, end, type] 列表，与 gold.jsonl 同格式。"""
+from collections import Counter
+
+import numpy as np
+
+from src.evaluate import _prf
+
+
+def _overlap(a, b):
+    return a[0] < b[1] and b[0] < a[1]
+
+
+def error_types(gold, pred):
+    """一个模型在一条记录上的错误按类型计数（amendment 9，定义 1）。"""
+    G, Q = {tuple(s) for s in gold}, {tuple(s) for s in pred}
+    c = Counter()
+    for p in Q - G:
+        if any(g[:2] == p[:2] for g in G):
+            c["type"] += 1
+        elif any(_overlap(g, p) and g[2] == p[2] for g in G):
+            c["boundary"] += 1
+        elif any(_overlap(g, p) for g in G):
+            c["boundary_type"] += 1
+        else:
+            c["extra"] += 1
+    for g in G - Q:
+        if not any(_overlap(g, p) for p in Q):
+            c["missed"] += 1
+    return dict(c)
+
+
+def _counts(gold, pred):
+    G, Q = {tuple(s) for s in gold}, {tuple(s) for s in pred}
+    return len(G & Q), len(Q - G), len(G - Q)
+
+
+def bootstrap_micro_f1(gold, pred, n=1000, seed=0):
+    """对记录重抽样的 micro-F1 95% 区间。gold / pred：与记录一一对应的标签列表。"""
+    c = np.array([_counts(g, p) for g, p in zip(gold, pred)], float)
+    rng = np.random.default_rng(seed)
+    f = []
+    for _ in range(n):
+        tp, fp, fn = c[rng.integers(0, len(c), len(c))].sum(0)
+        f.append(_prf(tp, fp, fn)[2])
+    return float(np.percentile(f, 2.5)), float(np.percentile(f, 97.5))
+
+
+def length_tertiles(lengths):
+    """{id: 词数} -> {id: short / medium / long}，在 1/3 和 2/3 分位数处切，等于切点的归低一组。"""
+    q1, q2 = np.quantile(list(lengths.values()), [1 / 3, 2 / 3])
+    return {i: "short" if n <= q1 else "medium" if n <= q2 else "long" for i, n in lengths.items()}
+
+
+def shared_errors(gold, by_model, min_agree=6):
+    """gold：{id: spans}；by_model：{model: {id: spans}}（amendment 9，定义 2）。"""
+    agreed, wrong, missed_all, n_gold = 0, 0, 0, 0
+    for i, g in gold.items():
+        G = {tuple(s) for s in g}
+        votes = Counter(s for labels in by_model.values() for s in {tuple(x) for x in labels[i]})
+        top = {s for s, v in votes.items() if v >= min_agree}
+        agreed += len(top)
+        wrong += len(top - G)
+        n_gold += len(G)
+        missed_all += sum(1 for s in G if votes[s] == 0)
+    return {"agreed_spans": agreed, "wrong_agreed_spans": wrong,
+            "wrong_share_of_agreed": wrong / agreed if agreed else 0.0,
+            "gold_spans": n_gold, "missed_by_all": missed_all,
+            "missed_by_all_share": missed_all / n_gold if n_gold else 0.0}
+
+
+def span_errors(gold, pred):
+    """一条记录的 span 错误数：多标的加漏标的（amendment 9，定义 3）。"""
+    _, fp, fn = _counts(gold, pred)
+    return fp + fn
+
+
+def record_f1(a, b):
+    """两组标签在一条记录上的 span F1；两边都为空记为 1。"""
+    tp, fp, fn = _counts(a, b)
+    if tp + fp + fn == 0:
+        return 1.0
+    return _prf(tp, fp, fn)[2]
+
+
+def auroc(scores, labels):
+    """分数越高越可能是 1 时 AUROC 越高；并列算一半（Mann-Whitney）。"""
+    s, y = np.asarray(scores, float), np.asarray(labels, int)
+    pos, neg = s[y == 1], s[y == 0]
+    if len(pos) == 0 or len(neg) == 0:
+        return float("nan")
+    gt = (pos[:, None] > neg[None, :]).sum()
+    eq = (pos[:, None] == neg[None, :]).sum()
+    return float((gt + 0.5 * eq) / (len(pos) * len(neg)))
+
+
+def topk_error_share(scores, errors, k):
+    """按分数从高到低检查前 k 条记录，能看到这个模型全部 span 错误的多少比例。
+    scores、errors：{id: 值}；分数并列时按 id 排，保证可复现。"""
+    order = sorted(scores, key=lambda i: (-scores[i], i))[:k]
+    total = sum(errors.values())
+    return sum(errors[i] for i in order) / total if total else 0.0
