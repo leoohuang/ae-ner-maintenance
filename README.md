@@ -377,6 +377,28 @@ The exploratory figures above were drawn before this amendment; the definitions 
 - Shared errors: 1,994 distinct spans are produced by at least six models; 254 of them (12.7%) are not in the human labels. 120 of the 2,398 human spans (5.0%) are produced exactly by none of the eight models.
 - Models for RQ3 (highest and lowest micro-F1, by the point estimate as pre-registered): `gemini-4-carbon` and `qwen3.8-27b`.
 
+## Results: RQ2, finding LLM errors before review (computed 2026-11-19)
+`scripts/rq2_uncertainty.py` on the NAISS GPU (80 runs, 8 models × seeds 1–10) → `results/gpu/llm/rq2_uncertainty.jsonl`; `scripts/rq2.py` → `results/llm/rq2.json` and `results/llm/rq2_signals.json` (the combined signal used by RQ3b). Pool: 717–721 records per seed. Means over seeds 1–10; AUROC ranges over seeds in brackets.
+
+| Model | records in error | AUROC uncertainty | AUROC disagreement | AUROC combined | top 50 / 100 / 200, disagreement | top 50 / 100 / 200, combined |
+|---|---|---|---|---|---|---|
+| `gemini-4-carbon` | 412 of 719 | 0.639 [0.608, 0.665] | 0.796 [0.792, 0.800] | 0.769 [0.750, 0.778] | 14% / 28% / 49% | 15% / 27% / 47% |
+| `gpt-6-astra` | 423 | 0.642 [0.584, 0.673] | 0.809 [0.806, 0.814] | 0.777 [0.749, 0.793] | 12% / 26% / 48% | 14% / 26% / 46% |
+| Claude Opus 5.5 | 425 | 0.643 [0.607, 0.684] | 0.812 [0.805, 0.815] | 0.780 [0.761, 0.806] | 15% / 27% / 48% | 15% / 26% / 47% |
+| `qwen4-max` | 426 | 0.633 [0.605, 0.683] | 0.825 [0.821, 0.828] | 0.785 [0.771, 0.810] | 17% / 31% / 55% | 15% / 28% / 50% |
+| `deepseek-v4-pro` | 444 | 0.613 [0.570, 0.671] | 0.843 [0.837, 0.846] | 0.785 [0.766, 0.807] | 16% / 28% / 50% | 15% / 25% / 46% |
+| Claude Haiku 5.5 | 451 | 0.618 [0.565, 0.653] | 0.840 [0.834, 0.845] | 0.784 [0.754, 0.808] | 16% / 30% / 50% | 15% / 26% / 46% |
+| `gpt-6-luna` | 465 | 0.630 [0.591, 0.688] | 0.870 [0.868, 0.872] | 0.809 [0.792, 0.840] | 16% / 30% / 52% | 14% / 26% / 47% |
+| `qwen3.8-27b` | 473 | 0.610 [0.571, 0.653] | 0.908 [0.906, 0.912] | 0.827 [0.800, 0.852] | 14% / 28% / 51% | 14% / 26% / 47% |
+
+Checking k random records shows on average k / N of the errors: 7% / 14% / 28% for k = 50 / 100 / 200.
+
+- All three signals find errors better than chance for every model. Checking the top 200 records (about 28% of the pool) by either disagreement or the combined signal shows 46–55% of a model's span errors, against 28% for random records.
+- LLM disagreement is the strongest signal (AUROC 0.80–0.91). Model uncertainty is weak (0.61–0.64) and varies more between seeds, because it comes from an NER model trained on only 37–41 records.
+- The combined signal has a lower AUROC than disagreement alone for every model and every seed (80 of 80). The weak uncertainty signal pulls it down. For the top-k shares the difference is smaller (0–5 points). RQ3b uses the combined signal as pre-registered (amendment 8); it is not replaced by disagreement.
+- Disagreement AUROC is highest for the weakest models (`qwen3.8-27b` 0.91, `gpt-6-luna` 0.87) and lowest for the strongest (`gemini-4-carbon` 0.80). A weak model's mistakes are often ones the other seven do not make; a strong model's remaining mistakes are more often shared with the others (RQ1: 12.7% of the spans produced by at least six models are wrong), so disagreement cannot see them.
+- More than half the records are in error for every model (412–473 of about 719), because one wrong span puts a record in error. AUROC at the record level therefore says how well a signal separates records with any error from records with none; the top-k shares count span errors.
+
 ## Exploratory overview figures (added 2026-11-17, not part of a pre-registered analysis)
 `scripts/plot_overview.py` draws three figures into `results/figures/`. They are descriptive and were made after the train_pool labelling; nothing below is a tested result, and the RQ1 analysis will be planned and run separately.
 
