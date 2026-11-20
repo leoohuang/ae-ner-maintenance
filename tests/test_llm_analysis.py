@@ -1,6 +1,6 @@
 import pytest
 
-from src.llm_analysis import (apply_labels, auroc, bootstrap_micro_f1, choose_review, combined_rank,
+from src.llm_analysis import (apply_labels, review_training_set, auroc, bootstrap_micro_f1, choose_review, combined_rank,
                               disagreement, error_types, length_tertiles, mean_ranks, record_f1,
                               shared_errors, span_errors, topk_error_share)
 
@@ -133,3 +133,22 @@ def test_choose_review_random_is_nested_over_k_and_reproducible():
     r100 = choose_review(pool, None, 100, "random", seed=3)
     assert r50 == r100[:50] and r50 == choose_review(pool, None, 50, "random", seed=3)
     assert choose_review(pool, None, 0, "random", seed=3) == []
+
+
+# --- RQ3c (amendment 10): the reviewed records alone ---
+def test_review_training_set_with_llm_labels_is_all_of_train_pool():
+    split = {"train_pool": [0, 1, 2], "val": [3], "test": [4, 5]}
+    llm = {0: [], 1: [[1, 2, A]], 2: [[0, 2, S]]}
+    train = review_training_set(_records(), llm, split, reviewed=[2], with_llm=True)
+    assert [r["id"] for r in train] == [0, 1, 2]
+    assert train[0]["spans"] == [] and train[2]["spans"] == [[0, 1, P]]
+
+
+def test_review_training_set_without_llm_labels_is_only_the_reviewed_human_records():
+    split = {"train_pool": [0, 1, 2], "val": [3], "test": [4, 5]}
+    llm = {0: [], 1: [[1, 2, A]], 2: [[0, 2, S]]}
+    train = review_training_set(_records(), llm, split, reviewed=[2, 0], with_llm=False)
+    assert [r["id"] for r in train] == [2, 0]
+    assert all(r["spans"] == [[0, 1, P]] for r in train)
+    with pytest.raises(ValueError):
+        review_training_set(_records(), llm, split, reviewed=[], with_llm=False)

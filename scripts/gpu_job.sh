@@ -4,7 +4,7 @@
 #SBATCH --gpus=1
 #SBATCH -t 05:00:00
 # Human-label runs: sbatch scripts/gpu_job.sh random|uncertainty|hybrid
-# LLM-label runs:   sbatch scripts/gpu_job.sh rq2 | rq3 <model> <strategy> | rq3b <model>
+# LLM-label runs:   sbatch scripts/gpu_job.sh rq2 | rq3 <model> <strategy> | rq3b <model> | rq3c
 
 set -e
 cd ~/ae-ner-maintenance
@@ -30,5 +30,8 @@ case "$1" in
            python scripts/run_active.py --strategy $3 --labels data/llm/$2.jsonl --out results/gpu/llm/$2/$3.jsonl
          fi ;;
   rq3b)  python scripts/run_review.py --model $2 ;;
+  rq3c)  # amendment 10: the reviewed records alone; the random choice does not depend on the LLM, so it runs once
+         python scripts/run_review.py --model gemini-4-carbon --review-only
+         python scripts/run_review.py --model qwen3.8-27b --review-only --choices signal ;;
   *) echo "unknown job: $1"; exit 1 ;;
 esac

@@ -154,3 +154,14 @@ def choose_review(pool_ids, combined, k, choice, seed):
         random.Random(1000 + seed).shuffle(order)
         return order[:k]
     raise ValueError(choice)
+
+
+def review_training_set(records, llm, split, reviewed, with_llm=True):
+    """RQ3b / RQ3c 的训练记录。with_llm：整个 train_pool，reviewed 用人工标签、其余用 LLM 标签（RQ3b）；
+    否则只有 reviewed 这些记录、人工标签（RQ3c，amendment 10），按 reviewed 的顺序。"""
+    if with_llm:
+        train = apply_labels(records, llm, split, reviewed=reviewed)
+        return [train[i] for i in split["train_pool"]]
+    if not reviewed:
+        raise ValueError("no reviewed records to train on")
+    return [dict(records[i]) for i in reviewed]
