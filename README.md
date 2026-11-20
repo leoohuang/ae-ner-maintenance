@@ -399,6 +399,66 @@ Checking k random records shows on average k / N of the errors: 7% / 14% / 28% f
 - Disagreement AUROC is highest for the weakest models (`qwen3.8-27b` 0.91, `gpt-6-luna` 0.87) and lowest for the strongest (`gemini-4-carbon` 0.80). A weak model's mistakes are often ones the other seven do not make; a strong model's remaining mistakes are more often shared with the others (RQ1: 12.7% of the spans produced by at least six models are wrong), so disagreement cannot see them.
 - More than half the records are in error for every model (412–473 of about 719), because one wrong span puts a record in error. AUROC at the record level therefore says how well a signal separates records with any error from records with none; the top-k shares count span errors.
 
+## Results: RQ3, active learning with LLM labels (computed 2026-11-20)
+NAISS GPU, jobs 5419498 and 5419523–5419527 → `results/gpu/llm/<model>/{random,uncertainty,hybrid}.jsonl`; `scripts/rq3.py` → `results/llm/rq3.json`, `results/figures/rq3_curves.png`. Human-label comparison and reference: the GPU replication runs in `results/gpu/` (amendment 2), reference F1 0.8882; the human-label numbers below are the same as in the GPU replication table. AULC over 5–60% of the training tokens, mean ± sd over seeds 1–10. Test labels are human in every case.
+
+| Training labels | AULC random | AULC uncertainty | AULC hybrid | F1 with all of train_pool |
+|---|---|---|---|---|
+| human | 0.8433 ± 0.0060 | 0.8571 ± 0.0044 | 0.8546 ± 0.0045 | 0.8882 |
+| `gemini-4-carbon` | 0.7696 ± 0.0054 | 0.7759 ± 0.0030 | 0.7712 ± 0.0041 | 0.7956 |
+| `qwen3.8-27b` | 0.6724 ± 0.0098 | 0.6726 ± 0.0057 | 0.6655 ± 0.0059 | 0.7079 |
+
+Pre-registered comparisons (paired Wilcoxon over seeds 1–10; 10 tests, no correction for multiple comparisons):
+
+| | `gemini-4-carbon` | `qwen3.8-27b` |
+|---|---|---|
+| uncertainty − random, LLM labels | +0.0063, 8 of 10 seeds, p = 0.020 | +0.0002, 4 of 10, p = 0.70 |
+| random: LLM − human labels | −0.0737, 0 of 10, p = 0.002 | −0.1710, 0 of 10, p = 0.002 |
+| uncertainty: LLM − human labels | −0.0812, 0 of 10, p = 0.002 | −0.1845, 0 of 10, p = 0.002 |
+| hybrid: LLM − human labels | −0.0834, 0 of 10, p = 0.002 | −0.1891, 0 of 10, p = 0.002 |
+| active-learning gain (uncertainty − random): LLM − human | −0.0075, 2 of 10, p = 0.020 | −0.0135, 1 of 10, p = 0.006 |
+
+Not pre-registered: hybrid − random with LLM labels, +0.0016 (6 of 10, p = 0.56) for `gemini-4-carbon` and −0.0069 (3 of 10, p = 0.11) for `qwen3.8-27b`.
+
+Budget to reach 90 / 95 / 98% of the reference (0.799 / 0.844 / 0.870): no curve with LLM labels reaches even 90%, at any budget, for either model. Human labels: random 11.3 / 24.5 / 52.4%, uncertainty 9.5 / 16.7 / 32.1%, hybrid 9.3 / 17.9 / 34.6%.
+
+- Training on LLM labels costs a lot of accuracy at every budget: 0.07–0.08 AULC with the best LLM and 0.17–0.19 with the weakest, in every seed.
+- The ceiling is low. With all 758 records labelled by `gemini-4-carbon` the NER model reaches 0.796, about what 10% of the text with human labels gives (random 0.792, about 76 records). With all 758 records labelled by `qwen3.8-27b` it reaches 0.708, below the 5% initial set with human labels (0.731, about 39 records).
+- Active learning still helps with the better LLM's labels, but less: uncertainty beats random by 0.006 AULC (human labels 0.014). With the weaker LLM's labels it does not help at all. The gain is smaller with LLM labels than with human labels for both models.
+- The NER model trained on `gemini-4-carbon` labels (0.796 on test) scores below the labels themselves on train_pool (0.836 in RQ1). The two are on different records, so this is only a rough sign that the model learns the LLM's boundary habits and does not average them away.
+
+## Results: RQ3b, LLM labels with a small human review (computed 2026-11-20)
+NAISS GPU, jobs 5546026 and 5546028 → `results/gpu/llm/review.jsonl` (140 runs); `scripts/rq3b.py` → `results/llm/rq3b.json`, `results/figures/rq3b_review.png`. One NER model on all 758 train_pool records; the k reviewed records get their human labels (simulated full correction, so an upper bound for a real review). Mean ± sd over seeds 1–10. "Errors fixed": the share of the LLM's span errors in train_pool that lie in the reviewed records.
+
+| LLM | k | choice | test micro-F1 | share of reference (0.8882) | tokens reviewed | errors fixed |
+|---|---|---|---|---|---|---|
+| `gemini-4-carbon` | 0 | – | 0.7981 ± 0.0027 | 89.9% | 0% | 0% |
+| | 50 | signal | 0.8082 ± 0.0029 | 91.0% | 7.0% | 14.3% |
+| | 50 | random | 0.8047 ± 0.0051 | 90.6% | 6.6% | 7.4% |
+| | 100 | signal | 0.8163 ± 0.0028 | 91.9% | 14.1% | 25.6% |
+| | 100 | random | 0.8112 ± 0.0040 | 91.3% | 13.1% | 14.1% |
+| | 200 | signal | 0.8308 ± 0.0061 | 93.5% | 28.2% | 44.4% |
+| | 200 | random | 0.8213 ± 0.0045 | 92.5% | 26.2% | 27.3% |
+| `qwen3.8-27b` | 0 | – | 0.7055 ± 0.0075 | 79.4% | 0% | 0% |
+| | 50 | signal | 0.7391 ± 0.0070 | 83.2% | 6.9% | 13.6% |
+| | 50 | random | 0.7241 ± 0.0074 | 81.5% | 6.6% | 6.8% |
+| | 100 | signal | 0.7633 ± 0.0073 | 85.9% | 14.0% | 25.1% |
+| | 100 | random | 0.7400 ± 0.0095 | 83.3% | 13.1% | 13.6% |
+| | 200 | signal | 0.8025 ± 0.0100 | 90.4% | 27.8% | 44.7% |
+| | 200 | random | 0.7778 ± 0.0095 | 87.6% | 26.2% | 27.0% |
+
+Pre-registered comparisons (paired Wilcoxon over seeds 1–10; 18 tests, no correction):
+- Signal vs random choice. `gemini-4-carbon`: k = 50 +0.0034 (7 of 10 seeds, p = 0.13), k = 100 +0.0051 (9 of 10, p = 0.004), k = 200 +0.0095 (10 of 10, p = 0.002). `qwen3.8-27b`: k = 50 +0.0150, k = 100 +0.0232, k = 200 +0.0247 (each 10 of 10, p = 0.002).
+- Each k > 0 vs k = 0: every one of the 12 comparisons is better in 10 of 10 seeds (p = 0.002). Gains for k = 50 / 100 / 200 with the signal: `gemini-4-carbon` +0.010 / +0.018 / +0.033, `qwen3.8-27b` +0.034 / +0.058 / +0.097.
+- Per-type F1 (descriptive, `rq3b.json`): most of the gain is in PhysicalObject (`gemini-4-carbon` 0.730 → 0.774, `qwen3.8-27b` 0.571 → 0.717 at k = 200 with the signal); Activity, State and Process change by 0.05 or less. Property also rises for `gemini-4-carbon` (0.742 → 0.833) but has too few spans to interpret (RQ1).
+
+Reading:
+- A review always helps, and choosing the records by the RQ2 signal helps more than choosing them at random: at each k the signal-chosen records hold about twice the errors of random ones (14 / 25 / 44% against 7 / 14 / 27%) for about the same amount of text (0.3–2.0 points more tokens; signal-chosen records are slightly longer). The advantage is larger for the weaker LLM, as RQ2 predicted (disagreement finds its errors more easily).
+- The review does not close the gap. Even after 200 records (about 28% of the text) are corrected, the best LLM gives 93.5% of the human-label reference and the weakest 90.4%.
+- k = 0 (0.7981 for `gemini-4-carbon`) and RQ3 random at 100% (0.7956) train on the same labels and records; the difference of 0.0025 comes from the order of the records in training and GPU non-determinism.
+
+Not pre-registered, compared by eye with the RQ3 human-label curves: correcting 200 records (about 28% of the text) and keeping the LLM labels on the rest gives 0.831 (`gemini-4-carbon`) and 0.803 (`qwen3.8-27b`). Training on human labels only, on 30% of the text and without any LLM labels, gives 0.854 (random) and 0.869 (uncertainty). On MaintIE, the LLM labels on the unreviewed records therefore seem to lower the result compared with not using them. This was not tested and the records differ (signal-chosen against random or uncertainty-chosen); a direct test would train on the k reviewed records alone.
+
 ## Exploratory overview figures (added 2026-11-17, not part of a pre-registered analysis)
 `scripts/plot_overview.py` draws three figures into `results/figures/`. They are descriptive and were made after the train_pool labelling; nothing below is a tested result, and the RQ1 analysis will be planned and run separately.
 
