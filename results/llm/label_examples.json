@@ -1,0 +1,347 @@
+[
+ {
+  "id": 79,
+  "text": "blown steering hose",
+  "note": "boundary: the LLMs join a modifier and an object into one name",
+  "gold": [
+   [
+    "blown",
+    "State"
+   ],
+   [
+    "steering",
+    "PhysicalObject"
+   ],
+   [
+    "hose",
+    "PhysicalObject"
+   ]
+  ],
+  "gemini-4-carbon": [
+   [
+    "blown",
+    "State"
+   ],
+   [
+    "steering hose",
+    "PhysicalObject"
+   ],
+   [
+    "hose",
+    "PhysicalObject"
+   ]
+  ],
+  "qwen3.8-27b": [
+   [
+    "blown",
+    "State"
+   ],
+   [
+    "steering hose",
+    "PhysicalObject"
+   ]
+  ]
+ },
+ {
+  "id": 92,
+  "text": "brake cooling hose leaking",
+  "note": "boundary: compare with 79, where the human labels split 'steering hose'",
+  "gold": [
+   [
+    "brake",
+    "PhysicalObject"
+   ],
+   [
+    "cooling hose",
+    "PhysicalObject"
+   ],
+   [
+    "hose",
+    "PhysicalObject"
+   ],
+   [
+    "leaking",
+    "Process"
+   ]
+  ],
+  "gemini-4-carbon": [
+   [
+    "brake cooling hose",
+    "PhysicalObject"
+   ],
+   [
+    "hose",
+    "PhysicalObject"
+   ],
+   [
+    "leaking",
+    "Process"
+   ]
+  ],
+  "qwen3.8-27b": [
+   [
+    "brake cooling hose",
+    "PhysicalObject"
+   ],
+   [
+    "leaking",
+    "Process"
+   ]
+  ]
+ },
+ {
+  "id": 0,
+  "text": "air conditioner thermostat not working",
+  "note": "extra nesting: gemini adds the longer object name as well",
+  "gold": [
+   [
+    "air conditioner",
+    "PhysicalObject"
+   ],
+   [
+    "thermostat",
+    "PhysicalObject"
+   ],
+   [
+    "not working",
+    "State"
+   ]
+  ],
+  "gemini-4-carbon": [
+   [
+    "air conditioner",
+    "PhysicalObject"
+   ],
+   [
+    "air conditioner thermostat",
+    "PhysicalObject"
+   ],
+   [
+    "thermostat",
+    "PhysicalObject"
+   ],
+   [
+    "not working",
+    "State"
+   ]
+  ],
+  "qwen3.8-27b": [
+   [
+    "air conditioner",
+    "PhysicalObject"
+   ],
+   [
+    "thermostat",
+    "PhysicalObject"
+   ],
+   [
+    "not working",
+    "State"
+   ]
+  ]
+ },
+ {
+  "id": 38,
+  "text": "axle temperature fault",
+  "note": "boundary and type: the human labels mark 'temperature fault' as one State",
+  "gold": [
+   [
+    "axle",
+    "PhysicalObject"
+   ],
+   [
+    "temperature fault",
+    "State"
+   ],
+   [
+    "fault",
+    "State"
+   ]
+  ],
+  "gemini-4-carbon": [
+   [
+    "axle",
+    "PhysicalObject"
+   ],
+   [
+    "temperature",
+    "Property"
+   ],
+   [
+    "fault",
+    "State"
+   ]
+  ],
+  "qwen3.8-27b": [
+   [
+    "axle",
+    "PhysicalObject"
+   ],
+   [
+    "temperature",
+    "Property"
+   ],
+   [
+    "fault",
+    "State"
+   ]
+  ]
+ },
+ {
+  "id": 41,
+  "text": "backhoe windscreen to be fixed",
+  "note": "type: the human guideline marks 'to be fixed' as State, the LLMs mark an Activity",
+  "gold": [
+   [
+    "backhoe",
+    "PhysicalObject"
+   ],
+   [
+    "windscreen",
+    "PhysicalObject"
+   ],
+   [
+    "to be fixed",
+    "State"
+   ]
+  ],
+  "gemini-4-carbon": [
+   [
+    "backhoe windscreen",
+    "PhysicalObject"
+   ],
+   [
+    "windscreen",
+    "PhysicalObject"
+   ],
+   [
+    "fixed",
+    "Activity"
+   ]
+  ],
+  "qwen3.8-27b": [
+   [
+    "backhoe windscreen",
+    "PhysicalObject"
+   ],
+   [
+    "fixed",
+    "Activity"
+   ]
+  ]
+ },
+ {
+  "id": 85,
+  "text": "boilermaker repairs to engine cover",
+  "note": "missed span: the human labels mark the trade ('boilermaker') as PhysicalObject",
+  "gold": [
+   [
+    "boilermaker",
+    "PhysicalObject"
+   ],
+   [
+    "repairs",
+    "Activity"
+   ],
+   [
+    "engine",
+    "PhysicalObject"
+   ],
+   [
+    "cover",
+    "PhysicalObject"
+   ]
+  ],
+  "gemini-4-carbon": [
+   [
+    "repairs",
+    "Activity"
+   ],
+   [
+    "engine cover",
+    "PhysicalObject"
+   ],
+   [
+    "cover",
+    "PhysicalObject"
+   ]
+  ],
+  "qwen3.8-27b": [
+   [
+    "boilermaker",
+    "PhysicalObject"
+   ],
+   [
+    "repairs",
+    "Activity"
+   ],
+   [
+    "engine",
+    "PhysicalObject"
+   ],
+   [
+    "engine cover",
+    "PhysicalObject"
+   ]
+  ]
+ },
+ {
+  "id": 12,
+  "text": "air horn not working compressor awaiting",
+  "note": "extra span: gemini marks 'awaiting' as State",
+  "gold": [
+   [
+    "air horn",
+    "PhysicalObject"
+   ],
+   [
+    "horn",
+    "PhysicalObject"
+   ],
+   [
+    "not working",
+    "State"
+   ],
+   [
+    "compressor",
+    "PhysicalObject"
+   ]
+  ],
+  "gemini-4-carbon": [
+   [
+    "air horn",
+    "PhysicalObject"
+   ],
+   [
+    "horn",
+    "PhysicalObject"
+   ],
+   [
+    "not working",
+    "State"
+   ],
+   [
+    "compressor",
+    "PhysicalObject"
+   ],
+   [
+    "awaiting",
+    "State"
+   ]
+  ],
+  "qwen3.8-27b": [
+   [
+    "air horn",
+    "PhysicalObject"
+   ],
+   [
+    "not working",
+    "State"
+   ],
+   [
+    "compressor",
+    "PhysicalObject"
+   ]
+  ]
+ }
+]
