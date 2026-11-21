@@ -19,7 +19,8 @@ How much labelled data does nested named entity recognition on short maintenance
 | Data preparation, grouped split (near-duplicates kept in one split) | Done |
 | Encoder pilot and frozen configuration | Done |
 | Random baseline, uncertainty sampling, hybrid strategy (10 seeds each) | Done — see [uncertainty results](#results-uncertainty-sampling-recorded-2026-10-20) and [hybrid results](#results-hybrid-strategy-recorded-2026-10-21) |
-| Independent replication on NAISS GPU hardware | In progress — see the [GPU replication protocol](#gpu-replication-protocol-pre-registered-2026-10-21-before-any-gpu-experiment-run) |
+| Independent replication on NAISS GPU hardware | Done — see [GPU replication results](#results-gpu-replication-run-2026-10-21-recorded-2026-11-16) |
+| LLM annotation study: RQ1, RQ2, RQ3, RQ3b, RQ3c (exploratory) | Done — see the [LLM annotation protocol](#llm-annotation-protocol-pre-registered-2026-11-16-before-any-llm-call) and the results sections below it |
 
 ## Repository layout
 
@@ -501,3 +502,33 @@ Exploratory. The question came from the RQ3b results (last paragraph of the RQ3b
 - Runs: for the same k reviewed records as RQ3b (same models, k = 50, 100, 200, same signal and random choice, same seeds 1–10), train one NER model on the k records with their human labels only. Same model and training settings, NAISS GPU, evaluation on the human test set. The random choice does not depend on the LLM (`choose_review` uses only the seed and the pool outside the seed's initial set, which is the same for both models), so it is run once. Size: 2 LLMs × 3 budgets × 10 seeds (signal) + 3 budgets × 10 seeds (random) = 90 runs, written to `results/gpu/llm/review_only.jsonl`.
 - Comparisons, paired over seeds 1–10 with the Wilcoxon signed-rank test: for each LLM, k and choice, RQ3b (k reviewed + LLM labels) minus reviewed records alone; 12 tests, no correction. Reported for each: test micro-F1 and per-type F1 (PhysicalObject and State in particular, descriptive).
 - All results are reported whatever their direction.
+
+## Results: RQ3c, the reviewed records alone (computed 2026-11-21, exploratory)
+Amendment 10. NAISS GPU, job 5600002 → `results/gpu/llm/review_only.jsonl` (90 runs); `scripts/rq3c.py` → `results/llm/rq3c.json`, `results/figures/rq3c_alone.png`. "Alone": one NER model trained only on the k reviewed records with their human labels. "With LLM": the RQ3b result for the same records and seeds (k reviewed + LLM labels on the other 758 − k). The script checks that both use the same reviewed records in every run. Random-choice records are the same for both LLMs, so the "alone" random rows are shared. Mean ± sd over seeds 1–10. The hypothesis was formed after seeing RQ3b, so the p-values are not confirmatory.
+
+| LLM | k | choice | alone | with LLM | with LLM − alone | seeds better with LLM | p |
+|---|---|---|---|---|---|---|---|
+| `gemini-4-carbon` | 50 | signal | 0.7116 ± 0.0244 | 0.8082 ± 0.0029 | +0.097 | 10 of 10 | 0.002 |
+| | 50 | random | 0.7592 ± 0.0262 | 0.8047 ± 0.0051 | +0.046 | 10 of 10 | 0.002 |
+| | 100 | signal | 0.7971 ± 0.0074 | 0.8163 ± 0.0028 | +0.019 | 10 of 10 | 0.002 |
+| | 100 | random | 0.8112 ± 0.0111 | 0.8112 ± 0.0040 | −0.000 | 4 of 10 | 1.0 |
+| | 200 | signal | 0.8460 ± 0.0056 | 0.8308 ± 0.0061 | −0.015 | 1 of 10 | 0.004 |
+| | 200 | random | 0.8459 ± 0.0084 | 0.8213 ± 0.0045 | −0.025 | 0 of 10 | 0.002 |
+| `qwen3.8-27b` | 50 | signal | 0.7288 ± 0.0418 | 0.7391 ± 0.0070 | +0.010 | 5 of 10 | 0.49 |
+| | 50 | random | 0.7592 ± 0.0262 | 0.7241 ± 0.0074 | −0.035 | 1 of 10 | 0.004 |
+| | 100 | signal | 0.8088 ± 0.0074 | 0.7633 ± 0.0073 | −0.046 | 0 of 10 | 0.002 |
+| | 100 | random | 0.8112 ± 0.0111 | 0.7400 ± 0.0095 | −0.071 | 0 of 10 | 0.002 |
+| | 200 | signal | 0.8443 ± 0.0069 | 0.8025 ± 0.0100 | −0.042 | 0 of 10 | 0.002 |
+| | 200 | random | 0.8459 ± 0.0084 | 0.7778 ± 0.0095 | −0.068 | 0 of 10 | 0.002 |
+
+Per-type F1, alone → with LLM (descriptive, `rq3c.json`), k = 200 with the signal:
+- PhysicalObject: `gemini-4-carbon` 0.808 → 0.774; `qwen3.8-27b` 0.809 → 0.717. The LLM labels lower it at every k for `qwen3.8-27b`, and for `gemini-4-carbon` from k = 100 on.
+- State: `gemini-4-carbon` 0.869 → 0.906; `qwen3.8-27b` 0.864 → 0.916. The LLM labels raise it at every k and for both LLMs; the gain is largest at k = 50 (`gemini-4-carbon` 0.677 → 0.898).
+- Process and Activity: the LLM labels raise them at small k (Process 0.62–0.79 → 0.84–0.87 at k = 50). At k = 200 the two settings differ by 0.035 or less.
+
+Reading:
+- The answer depends on the LLM and on k. For the stronger LLM, keeping its labels on the unreviewed records helps when few records are reviewed (+0.10 at k = 50 with the signal), makes no difference at about 100 random records, and hurts at 200 (−0.015 to −0.025). For the weaker LLM, its labels hurt from about 50 records on (−0.04 to −0.07 from k = 100). The crossover is earlier for the weaker LLM.
+- The overall effect is a balance of two per-type effects that go in opposite directions. The LLM labels teach the rarer types (State, Process) that a small human set covers poorly. They also teach the LLM's own PhysicalObject boundaries, which differ from the annotators' (RQ1, figure 4), and these outweigh the gain once the human set is large enough to cover the rare types.
+- Records chosen by the RQ2 signal are a poor training set on their own at small k (k = 50: 0.712 and 0.729 against 0.759 for random records, with large sd). They were chosen because the LLM gets them wrong, not to be representative. Mixed with the LLM labels they do better than random records (RQ3b).
+- Neither setting reaches the reference: 200 human-labelled records alone give 0.846 against 0.888 for all 758, so neither replaces a full annotation.
+- Limits: one dataset, two LLMs, a simulated full review, and no correction over the 12 tests. Mixing settings that were not tried, such as weighting the LLM labels lower or keeping only the LLM's State, Process and Activity labels, might do better than both; they are not tested here.

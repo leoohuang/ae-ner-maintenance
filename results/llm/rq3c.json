@@ -1,0 +1,375 @@
+{
+ "reference_f1": 0.8881777914136327,
+ "models": {
+  "highest": "gemini-4-carbon",
+  "lowest": "qwen3.8-27b"
+ },
+ "seeds": [
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10
+ ],
+ "exploratory": true,
+ "per_model": {
+  "gemini-4-carbon": {
+   "50|signal": {
+    "k": 50,
+    "choice": "signal",
+    "alone_f1": 0.7116357709773563,
+    "alone_sd": 0.024365247516261793,
+    "with_llm_f1": 0.8081587294678185,
+    "with_llm_sd": 0.002923049274099059,
+    "alone_per_type": {
+     "PhysicalObject": 0.6687443569332072,
+     "State": 0.676932139690383,
+     "Process": 0.6216355373788844,
+     "Activity": 0.8499323817952902,
+     "Property": 0.0
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.7442970267546155,
+     "State": 0.8975089433953054,
+     "Process": 0.8373005417733497,
+     "Activity": 0.9378504143158558,
+     "Property": 0.7723609723609723
+    }
+   },
+   "50|random": {
+    "k": 50,
+    "choice": "random",
+    "alone_f1": 0.759190896007006,
+    "alone_sd": 0.02617785302552011,
+    "with_llm_f1": 0.8047139364762759,
+    "with_llm_sd": 0.005125868563818242,
+    "alone_per_type": {
+     "PhysicalObject": 0.7198718131214638,
+     "State": 0.7645700398653319,
+     "Process": 0.7915212941198785,
+     "Activity": 0.8605008666056653,
+     "Property": 0.2418650793650794
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.7388727010489464,
+     "State": 0.9001223645266052,
+     "Process": 0.8515589153724559,
+     "Activity": 0.9342265167743922,
+     "Property": 0.771978021978022
+    }
+   },
+   "100|signal": {
+    "k": 100,
+    "choice": "signal",
+    "alone_f1": 0.7970933078901009,
+    "alone_sd": 0.007426647787288397,
+    "with_llm_f1": 0.8163263988205532,
+    "with_llm_sd": 0.0028417635485216705,
+    "alone_per_type": {
+     "PhysicalObject": 0.7573935827112677,
+     "State": 0.797424483792881,
+     "Process": 0.7641849459702993,
+     "Activity": 0.908449345915531,
+     "Property": 0.10833333333333332
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.7532161065754877,
+     "State": 0.9092553109632855,
+     "Process": 0.8463362076325451,
+     "Activity": 0.9401440226664833,
+     "Property": 0.8075258075258075
+    }
+   },
+   "100|random": {
+    "k": 100,
+    "choice": "random",
+    "alone_f1": 0.8112100346996334,
+    "alone_sd": 0.011113269420742032,
+    "with_llm_f1": 0.8111776642787856,
+    "with_llm_sd": 0.003952457058306689,
+    "alone_per_type": {
+     "PhysicalObject": 0.7740571025609999,
+     "State": 0.8354843396724958,
+     "Process": 0.8514099393472498,
+     "Activity": 0.894114308562347,
+     "Property": 0.5915873015873017
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.748552406283293,
+     "State": 0.902967399243724,
+     "Process": 0.8489539436598259,
+     "Activity": 0.9352562762464116,
+     "Property": 0.7557442557442557
+    }
+   },
+   "200|signal": {
+    "k": 200,
+    "choice": "signal",
+    "alone_f1": 0.8459603506121507,
+    "alone_sd": 0.005586014798890337,
+    "with_llm_f1": 0.8307591414389064,
+    "with_llm_sd": 0.006134757340006683,
+    "alone_per_type": {
+     "PhysicalObject": 0.8076525472668397,
+     "State": 0.8689482274410414,
+     "Process": 0.864976873265495,
+     "Activity": 0.9342786766751292,
+     "Property": 0.518888888888889
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.7743605021114766,
+     "State": 0.9055523311091397,
+     "Process": 0.8703504324806846,
+     "Activity": 0.9414714806304749,
+     "Property": 0.8329836829836829
+    }
+   },
+   "200|random": {
+    "k": 200,
+    "choice": "random",
+    "alone_f1": 0.8458993775011434,
+    "alone_sd": 0.008388512898093987,
+    "with_llm_f1": 0.821261262369044,
+    "with_llm_sd": 0.004504827460755587,
+    "alone_per_type": {
+     "PhysicalObject": 0.8127409429918233,
+     "State": 0.8672151863956501,
+     "Process": 0.8650143721180445,
+     "Activity": 0.917634454151111,
+     "Property": 0.8124458874458874
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.7609758482760178,
+     "State": 0.9152381706738962,
+     "Process": 0.8589939604288739,
+     "Activity": 0.9377613656442702,
+     "Property": 0.7727106227106229
+    }
+   },
+   "0|none": {
+    "with_llm_f1": 0.798099818651959
+   }
+  },
+  "qwen3.8-27b": {
+   "50|signal": {
+    "k": 50,
+    "choice": "signal",
+    "alone_f1": 0.7287674340839073,
+    "alone_sd": 0.041794748434539626,
+    "with_llm_f1": 0.7390992030689624,
+    "with_llm_sd": 0.00702238273616979,
+    "alone_per_type": {
+     "PhysicalObject": 0.6989100054365999,
+     "State": 0.6254965957187448,
+     "Process": 0.6988997464966382,
+     "Activity": 0.853818422248495,
+     "Property": 0.0
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.6183202040492978,
+     "State": 0.8963142832539865,
+     "Process": 0.8717887837314293,
+     "Activity": 0.9173551569828271,
+     "Property": 0.7216117216117216
+    }
+   },
+   "50|random": {
+    "k": 50,
+    "choice": "random",
+    "alone_f1": 0.759190896007006,
+    "alone_sd": 0.02617785302552011,
+    "with_llm_f1": 0.7241124088052276,
+    "with_llm_sd": 0.007411910309630626,
+    "alone_per_type": {
+     "PhysicalObject": 0.7198718131214638,
+     "State": 0.7645700398653319,
+     "Process": 0.7915212941198785,
+     "Activity": 0.8605008666056653,
+     "Property": 0.2418650793650794
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.6021444848399542,
+     "State": 0.8900681933257747,
+     "Process": 0.862802063471087,
+     "Activity": 0.9014671543464257,
+     "Property": 0.69253663003663
+    }
+   },
+   "100|signal": {
+    "k": 100,
+    "choice": "signal",
+    "alone_f1": 0.8088469115175936,
+    "alone_sd": 0.007405943151921087,
+    "with_llm_f1": 0.763262358525465,
+    "with_llm_sd": 0.007335037890709919,
+    "alone_per_type": {
+     "PhysicalObject": 0.7754125359640134,
+     "State": 0.7943131377317416,
+     "Process": 0.8279443892178119,
+     "Activity": 0.9088632253254,
+     "Property": 0.0
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.6551089777152901,
+     "State": 0.9039058840344124,
+     "Process": 0.8841554866837829,
+     "Activity": 0.9268260246578327,
+     "Property": 0.7315018315018316
+    }
+   },
+   "100|random": {
+    "k": 100,
+    "choice": "random",
+    "alone_f1": 0.8112100346996334,
+    "alone_sd": 0.011113269420742032,
+    "with_llm_f1": 0.740040109947457,
+    "with_llm_sd": 0.009488983292907354,
+    "alone_per_type": {
+     "PhysicalObject": 0.7740571025609999,
+     "State": 0.8354843396724958,
+     "Process": 0.8514099393472498,
+     "Activity": 0.894114308562347,
+     "Property": 0.5915873015873017
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.6271113846814749,
+     "State": 0.8957023495578147,
+     "Process": 0.8698287363048827,
+     "Activity": 0.9076782205903845,
+     "Property": 0.7346520146520146
+    }
+   },
+   "200|signal": {
+    "k": 200,
+    "choice": "signal",
+    "alone_f1": 0.8443479508603708,
+    "alone_sd": 0.006927493243964253,
+    "with_llm_f1": 0.8024884543842598,
+    "with_llm_sd": 0.010016016755088534,
+    "alone_per_type": {
+     "PhysicalObject": 0.8091092042984146,
+     "State": 0.8644968334890859,
+     "Process": 0.8599385155906895,
+     "Activity": 0.9311878550169403,
+     "Property": 0.1285714285714286
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.7173011608936223,
+     "State": 0.9160822660666733,
+     "Process": 0.8918659446510644,
+     "Activity": 0.9378315989418458,
+     "Property": 0.7591575091575091
+    }
+   },
+   "200|random": {
+    "k": 200,
+    "choice": "random",
+    "alone_f1": 0.8458993775011434,
+    "alone_sd": 0.008388512898093987,
+    "with_llm_f1": 0.7777534472709499,
+    "with_llm_sd": 0.00950766944087216,
+    "alone_per_type": {
+     "PhysicalObject": 0.8127409429918233,
+     "State": 0.8672151863956501,
+     "Process": 0.8650143721180445,
+     "Activity": 0.917634454151111,
+     "Property": 0.8124458874458874
+    },
+    "with_llm_per_type": {
+     "PhysicalObject": 0.6862840157137454,
+     "State": 0.9064612061403732,
+     "Process": 0.883302974288698,
+     "Activity": 0.9186858997806334,
+     "Property": 0.7642357642357642
+    }
+   },
+   "0|none": {
+    "with_llm_f1": 0.7055095807445
+   }
+  }
+ },
+ "tests": {
+  "gemini-4-carbon": {
+   "k=50 signal: with LLM - alone": {
+    "diff": 0.09652295849046223,
+    "better": 10,
+    "n": 10,
+    "p": 0.001953125
+   },
+   "k=50 random: with LLM - alone": {
+    "diff": 0.045523040469269735,
+    "better": 10,
+    "n": 10,
+    "p": 0.001953125
+   },
+   "k=100 signal: with LLM - alone": {
+    "diff": 0.019233090930452435,
+    "better": 10,
+    "n": 10,
+    "p": 0.001953125
+   },
+   "k=100 random: with LLM - alone": {
+    "diff": -3.2370420847693815e-05,
+    "better": 4,
+    "n": 10,
+    "p": 1.0
+   },
+   "k=200 signal: with LLM - alone": {
+    "diff": -0.015201209173244235,
+    "better": 1,
+    "n": 10,
+    "p": 0.00390625
+   },
+   "k=200 random: with LLM - alone": {
+    "diff": -0.024638115132099382,
+    "better": 0,
+    "n": 10,
+    "p": 0.001953125
+   }
+  },
+  "qwen3.8-27b": {
+   "k=50 signal: with LLM - alone": {
+    "diff": 0.01033176898505519,
+    "better": 5,
+    "n": 10,
+    "p": 0.4921875
+   },
+   "k=50 random: with LLM - alone": {
+    "diff": -0.03507848720177846,
+    "better": 1,
+    "n": 10,
+    "p": 0.00390625
+   },
+   "k=100 signal: with LLM - alone": {
+    "diff": -0.04558455299212859,
+    "better": 0,
+    "n": 10,
+    "p": 0.001953125
+   },
+   "k=100 random: with LLM - alone": {
+    "diff": -0.07116992475217639,
+    "better": 0,
+    "n": 10,
+    "p": 0.001953125
+   },
+   "k=200 signal: with LLM - alone": {
+    "diff": -0.04185949647611107,
+    "better": 0,
+    "n": 10,
+    "p": 0.001953125
+   },
+   "k=200 random: with LLM - alone": {
+    "diff": -0.0681459302301935,
+    "better": 0,
+    "n": 10,
+    "p": 0.001953125
+   }
+  }
+ },
+ "n_tests": 12
+}
