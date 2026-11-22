@@ -85,6 +85,12 @@ def val_subsets(split, n_examples, n_tune, seed):
     return ids[:n_examples], ids[n_examples:n_examples + n_tune]
 
 
+def val_heldout(split, n_examples, n_tune, seed):
+    """Amendment 11：val 里既不是示例也不是调提示词用的记录，按 val 原顺序。"""
+    used = set(sum(val_subsets(split, n_examples, n_tune, seed), []))
+    return [i for i in split["val"] if i not in used]
+
+
 def format_record(rec):
     """把每个词和它的下标一起给模型看，模型按下标回答。"""
     return " ".join(f"{i}:{t}" for i, t in enumerate(rec["tokens"]))

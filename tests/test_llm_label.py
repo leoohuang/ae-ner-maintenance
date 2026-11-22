@@ -3,7 +3,7 @@ import json
 import pytest
 
 from src.llm_label import (assert_not_test, format_record, label_one, parse_reply, parse_reply_lenient,
-                           recover_failed, render_prompt, run_labelling, val_subsets)
+                           recover_failed, render_prompt, run_labelling, val_heldout, val_subsets)
 
 
 def test_plain_json_is_parsed():
@@ -56,6 +56,14 @@ def test_val_subsets_are_disjoint_fixed_and_from_val():
     assert len(ex) == 5 and len(tune) == 20 and not set(ex) & set(tune)
     assert set(ex) | set(tune) <= set(SPLIT["val"])
     assert (ex, tune) == val_subsets(SPLIT, n_examples=5, n_tune=20, seed=7)
+
+
+def test_val_heldout_is_the_rest_of_val_in_val_order():
+    ex, tune = val_subsets(SPLIT, n_examples=5, n_tune=20, seed=7)
+    rest = val_heldout(SPLIT, n_examples=5, n_tune=20, seed=7)
+    assert not set(rest) & (set(ex) | set(tune))
+    assert set(rest) | set(ex) | set(tune) == set(SPLIT["val"])
+    assert rest == [i for i in SPLIT["val"] if i in set(rest)]
 
 
 def test_record_shows_every_token_with_its_index():
