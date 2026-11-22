@@ -165,3 +165,27 @@ def review_training_set(records, llm, split, reviewed, with_llm=True):
     if not reviewed:
         raise ValueError("no reviewed records to train on")
     return [dict(records[i]) for i in reviewed]
+
+
+def prompt_diff(gold, runs_a, runs_b, n=1000, seed=0, etype=None):
+    """Amendment 11：两个提示词各跑若干遍，比较 exact-match F1（每个提示词取各遍的平均）。
+    runs_a / runs_b：每遍是与 gold 一一对应的标签列表。etype 给定时只看这一类。
+    返回 a、b 的平均 F1、差 b − a，以及对记录配对重抽样的 95% 区间。"""
+    keep = (lambda s: [x for x in s if x[2] == etype]) if etype else (lambda s: s)
+    g = [keep(x) for x in gold]
+    ca, cb = ([np.array([_counts(gi, keep(p)) for gi, p in zip(g, run)], float) for run in runs]
+              for runs in (runs_a, runs_b))
+    ca, cb = list(ca), list(cb)
+
+    def f1(cs, idx):
+        return float(np.mean([_prf(*c[idx].sum(0))[2] for c in cs]))
+
+    full = np.arange(len(g))
+    a, b = f1(ca, full), f1(cb, full)
+    rng = np.random.default_rng(seed)
+    d = []
+    for _ in range(n):
+        idx = rng.integers(0, len(g), len(g))
+        d.append(f1(cb, idx) - f1(ca, idx))
+    return {"a": a, "b": b, "diff": b - a,
+            "ci95": [float(np.percentile(d, 2.5)), float(np.percentile(d, 97.5))]}

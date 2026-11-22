@@ -1,6 +1,6 @@
 import pytest
 
-from src.llm_analysis import (apply_labels, review_training_set, auroc, bootstrap_micro_f1, choose_review, combined_rank,
+from src.llm_analysis import (prompt_diff, apply_labels, review_training_set, auroc, bootstrap_micro_f1, choose_review, combined_rank,
                               disagreement, error_types, length_tertiles, mean_ranks, record_f1,
                               shared_errors, span_errors, topk_error_share)
 
@@ -152,3 +152,20 @@ def test_review_training_set_without_llm_labels_is_only_the_reviewed_human_recor
     assert all(r["spans"] == [[0, 1, P]] for r in train)
     with pytest.raises(ValueError):
         review_training_set(_records(), llm, split, reviewed=[], with_llm=False)
+
+
+def test_prompt_diff_is_zero_for_identical_runs_and_positive_for_a_better_prompt():
+    gold = [[[0, 1, "PhysicalObject"]], [[1, 2, "State"], [0, 1, "PhysicalObject"]], []]
+    bad = [[[0, 2, "PhysicalObject"]], [[1, 2, "State"]], []]
+    d = prompt_diff(gold, [bad, bad], [bad, bad], n=200, seed=0)
+    assert d["diff"] == 0 and d["ci95"] == [0.0, 0.0]
+    d = prompt_diff(gold, [bad, bad], [gold, bad], n=200, seed=0)
+    assert d["diff"] > 0 and d["ci95"][1] > 0
+    assert d["a"] < d["b"]
+
+
+def test_prompt_diff_by_type_ignores_other_types():
+    gold = [[[0, 1, "PhysicalObject"], [1, 2, "State"]]]
+    pred = [[[0, 1, "PhysicalObject"]]]
+    d = prompt_diff(gold, [pred], [gold], n=50, seed=0, etype="PhysicalObject")
+    assert d["a"] == 1.0 and d["b"] == 1.0

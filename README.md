@@ -547,3 +547,20 @@ Exploratory. The idea came from RQ1 (76% of the disagreements, 87% of the Physic
 - Measures: exact-match micro-F1 and per-type F1 against the human labels, mean over the 3 runs. Difference v3 − v2 with a paired bootstrap 95% interval over records (1,000 resamples, seed 0; in each resample, each prompt's F1 is the mean of its 3 runs).
 - Decision rule, fixed now: relabelling train_pool with v3 is worth considering only if (a) PhysicalObject F1 rises by at least 0.03 with a 95% interval above 0, (b) micro-F1 does not fall (interval not wholly below 0), and (c) no other type with at least 30 human spans in these records falls by more than 0.02. Any relabelling and training would be a further amendment.
 - Limits stated before running: about 140 PhysicalObject spans, so only large changes can be seen; the human labels are themselves not consistent on nesting (amendment 6), so even rules followed exactly cannot reach them; the guideline may make the LLM split more finely than the annotators did, which counts as an error here. All results are reported whatever their direction.
+
+## Results: boundary rules in the prompt (computed 2026-11-22, exploratory)
+Amendment 11. `scripts/label_llm.py --split heldout` → `data/llm/heldout/<prompt>/run<k>/`; `scripts/prompt_rules.py` → `results/llm/prompt_rules.json`. `gemini-4-carbon`, 78 held-out val records (143 PhysicalObject, 54 Activity, 32 State, 12 Process, 3 Property human spans), 3 runs per prompt, no failed or dropped replies. The smoke call (one tuning record) parsed. Run 2 of v2 stopped after 43 records on the account's limit of 20 requests per minute (the six runs were started at once) and was continued from there with the same prompt and settings.
+
+| | v2 | v3 | v3 − v2 | 95% interval |
+|---|---|---|---|---|
+| micro-F1 | 0.8522 | 0.8768 | +0.025 | [−0.007, +0.054] |
+| PhysicalObject | 0.7953 | 0.8291 | +0.034 | [−0.018, +0.082] |
+| State | 0.9206 | 0.9519 | +0.031 | [0.000, +0.091] |
+| Process | 0.8922 | 0.9010 | +0.009 | [−0.048, +0.087] |
+| Activity | 0.9690 | 0.9630 | −0.006 | [−0.019, 0.000] |
+| Property (3 spans) | 0.8571 | 0.8571 | 0.000 | |
+
+- Runs agree closely: micro-F1 0.849–0.854 with v2 and 0.875–0.879 with v3; PhysicalObject 0.791–0.798 and 0.828–0.832. Every v3 run is above every v2 run.
+- With v3 the model marks fewer spans (259 against 272 per run; PhysicalObject 159 against 171, human 143), and boundary disagreements with the right type fall from 43.7 to 31.0 per run. Missed and extra spans barely change (3.0 → 4.3 and 5.3 → 5.7).
+- Decision rule: (a) not met. PhysicalObject rises by 0.034, above the 0.03 threshold, but the 95% interval over records includes 0. (b) met: micro-F1 does not fall. (c) met: State and Activity do not fall by more than 0.02. So, by the rule fixed in amendment 11, relabelling train_pool with v3 is not supported.
+- Reading: the rules change the model's output in the intended direction and the change is the same in every run; with 78 records it is not possible to tell whether the gain holds on other records. The interval reflects how much the result depends on which records are drawn, not run-to-run noise.
